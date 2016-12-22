@@ -38,11 +38,14 @@ public abstract class TouchScroller {
             case MotionEvent.ACTION_DOWN:
                 handleActionDown(event);
                 break;
+            case MotionEvent.ACTION_POINTER_DOWN:
+                handlerPointerDown(event);
+                break;
             case MotionEvent.ACTION_MOVE:
                 handleActionMove(event);
                 break;
             case MotionEvent.ACTION_POINTER_UP:
-                System.out.println("sadf");
+                handlePointerUp(event);
                 break;
             case MotionEvent.ACTION_UP:
                 handleActionUp();
@@ -51,6 +54,14 @@ public abstract class TouchScroller {
 
         state.savePrevEvent(event);
         return true;
+    }
+
+    private void handlePointerUp(MotionEvent event) {
+        state.onPointerUp(event);
+    }
+
+    private void handlerPointerDown(MotionEvent event) {
+        state.onPointerDown(event);
     }
 
     private void handleActionUp() {
@@ -68,6 +79,7 @@ public abstract class TouchScroller {
         state.onDown(event);
         handler.postDelayed(detectLongPress, 1000);
         handler.postDelayed(rejectTap, 500);
+        onStartMotion();
     }
 
     private void handleActionMove(MotionEvent event) {
@@ -81,16 +93,20 @@ public abstract class TouchScroller {
                 state.computeScroll(event, reuse);
                 performScroll(reuse);
             }
-//            switch (state) {
-//                case SCROLL:
-////                    case ROTATE:
-//                    performScroll(event);
-//                    break;
-//                case TILT:
-//                    break;
-//            }
+            if(state.inZoom()) {
+                float zoom = state.computeZoom(event, reuse);
+                performZoom(zoom, reuse);
+            }
         }
     }
+
+    private void performZoom(float zoom, PointF pivot) {
+        onZoom(zoom, pivot);
+    }
+
+    protected void onStartMotion() {}
+
+    protected void onZoom(float zoom, PointF pivot) {}
 
     private void performScroll(PointF scrollOffset) {
         onScroll(scrollOffset.x, scrollOffset.y);

@@ -14,6 +14,8 @@ import rx.Observable;
 import rx.subjects.PublishSubject;
 
 import static rx.Observable.combineLatest;
+import static rx.Observable.concat;
+import static rx.Observable.just;
 
 /**
  * MapTileProviderArray
@@ -35,6 +37,7 @@ public class MapTileProviderArray extends MapTileProviderBase {
         Observable<?> updateCache =
                 updates
                         .buffer(100, TimeUnit.MILLISECONDS, 10)
+                        .filter(list -> !list.isEmpty())
                         .onBackpressureBuffer(1, null, () -> true)
                         .observeOn(MapSchedulers.tilesScheduler())
                         .doOnNext(mapTileStates -> {
@@ -45,7 +48,7 @@ public class MapTileProviderArray extends MapTileProviderBase {
 
         return
                 combineLatest(
-                        updateCache,
+                        concat(just(null), updateCache),
                         listObservable,
                         (aVoid, projectionListPair) -> projectionListPair)
                         .observeOn(MapSchedulers.tilesScheduler())

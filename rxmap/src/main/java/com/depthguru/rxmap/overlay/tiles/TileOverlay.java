@@ -18,52 +18,75 @@ import java.util.Arrays;
  */
 public class TileOverlay extends Overlay<MapTileBatch> {
 
-    public TileOverlay(Context context) {
-        super(new MapTileProviderArray(Arrays.asList(new FileStorageProviderModule(context), new MapnikProviderModule(context))));
-    }
-
     public TileOverlay(MapTileProviderBase mapTileProviderBase) {
         super(mapTileProviderBase);
     }
 
+    public TileOverlay(Context context) {
+        this(new MapTileProviderArray(Arrays.asList(new FileStorageProviderModule(context), new MapnikProviderModule(context))));
+    }
+
     @Override
     protected Drawer createDrawer(MapTileBatch mapTileBatch) {
-        return new Drawer(mapTileBatch.getProjection()) {
-            @Override
-            public void draw(Canvas canvas, Projection projection) {
-                int startX = projection.getOffsetX();
-                int startY = projection.getOffsetY();
+        return new TilesDrawer(mapTileBatch);
+    }
 
-                Rect screenRect = projection.getScreenRect();
-                int worldSize = projection.getWorldSize();
+    private static class TilesDrawer extends Drawer {
 
-                startX = TilesInflater.mod(startX, worldSize);
-                startY = TilesInflater.mod(startY, worldSize);
+        private final MapTileBatch mapTileBatch;
 
-                int repeatsX = screenRect.width() / worldSize;
-                int repeatsY = screenRect.height() / worldSize;
+        TilesDrawer(MapTileBatch mapTileBatch) {
+            super(mapTileBatch.getProjection());
+            this.mapTileBatch = mapTileBatch;
+        }
 
-                if (screenRect.width() % worldSize != 0) {
-                    repeatsX++;
-                }
-                if (screenRect.height() % worldSize != 0) {
-                    repeatsY++;
-                }
+        @Override
+        public void draw(Canvas canvas, Projection projection) {
+            int startX = projection.getOffsetX();
+            int startY = projection.getOffsetY();
 
-                for (int i = -1; i < repeatsX; i++) {
-                    for (int j = -1; j < repeatsY; j++) {
-                        for (MapTile tile : mapTileBatch.getMapTiles()) {
-                            int x = tile.getX() * 256 + worldSize * i + startX;
-                            int y = tile.getY() * 256 + worldSize * j + startY;
-                            Drawable drawable = mapTileBatch.getTile(tile);
-                            if (drawable != null && !canvas.quickReject(x, y, x + 256, y + 256, Canvas.EdgeType.AA)) {
-                                drawable.setBounds(x, y, x + 256, y + 256);
-                                drawable.draw(canvas);
-                            }
+            Rect screenRect = projection.getScreenRect();
+            int worldSize = projection.getWorldSize();
+
+            int tilSize = 256;
+
+            if (baseProjection().getDiscreteZoom() != projection.getDiscreteZoom()) {
+                int delta = projection.getDiscreteZoom() - baseProjection().getDiscreteZoom();
+                float factor = (float) Math.pow(2, delta);
+
+                tilSize *= factor;
+            }
+
+            startX = TilesInflater.mod(startX, worldSize);
+            startY = TilesInflater.mod(startY, worldSize);
+
+            int repeatsX = screenRect.width() / worldSize;
+            int repeatsY = screenRect.height() / worldSize;
+
+            if (screenRect.width() % worldSize != 0) {
+                repeatsX++;
+            }
+            if (screenRect.height() % worldSize != 0) {
+                repeatsY++;
+            }
+
+            canvas.save();
+
+            for (int i = -1; i < repeatsX; i++) {
+                for (int j = -1; j < repeatsY; j++) {
+                    for (MapTile tile : mapTileBatch.getMapTiles()) {
+                        int x = tile.getX() * tilSize + worldSize * i + startX;
+                        int y = tile.getY() * tilSize + worldSize * j + startY;
+                        Drawable drawable = mapTileBatch.getTile(tile);
+                        if (drawable != null && !canvas.quickReject(x, y, x + tilSize, y + tilSize, Canvas.EdgeType.AA)) {
+                            drawable.setBounds(x, y, x + tilSize, y + tilSize);
+                            drawable.draw(canvas);
                         }
                     }
                 }
             }
-        };
+
+            canvas.restore();
+        }
     }
 }

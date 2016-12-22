@@ -1,5 +1,6 @@
 package com.depthguru.rxmap;
 
+import android.graphics.PointF;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
@@ -13,10 +14,13 @@ public class Scroller {
     private static final Interpolator LINEAR = new LinearInterpolator();
     private static final Interpolator DECELERATE = new DecelerateInterpolator();
 
-    private final float tension = 0.015f;
+    private static final float TENSION = 0.007f;
 
     private Axis x = new Axis();
     private Axis y = new Axis();
+
+    public Scroller() {
+    }
 
     public void scrollBy(float dx, float dy) {
         x.scrollBy(dx);
@@ -29,31 +33,44 @@ public class Scroller {
         }
 
         float velocity = (float) Math.hypot(xVelocity, yVelocity);
-        int duration = (int) (velocity / tension);
-
-//        float xVelocityRatio = Math.abs(xVelocity*xVelocity / (yVelocity*yVelocity + xVelocity*xVelocity));
-//        float xTension = tension * xVelocityRatio;
+        int duration = (int) (velocity / TENSION);
 
         x.fling(xVelocity, duration, xVelocity / duration);
         y.fling(yVelocity, duration, yVelocity / duration);
     }
 
-    private int computeDuration(float velocity) {
-        return (int) (velocity / 0.02f);
-    }
-
     public float getCurrX() {
-        x.computeCurrentValue();
         return x.currentPosition;
     }
 
     public float getCurrY() {
-        y.computeCurrentValue();
         return y.currentPosition;
     }
 
     public boolean computeScrollOffset() {
-        return !x.isEnd() || !y.isEnd();
+        boolean inProcess = !isFinished();
+        x.computeCurrentValue();
+        y.computeCurrentValue();
+        return inProcess;
+    }
+
+    public boolean isFinished() {
+        return x.isEnd() && y.isEnd();
+    }
+
+    public void offsetBy(float offsetX, float offsetY) {
+        this.x.offsetBy(offsetX);
+        this.y.offsetBy(offsetY);
+    }
+
+    public void stopScroll() {
+        x.stopScroll();
+        y.stopScroll();
+    }
+
+    public void reconfigureWithZoomFactor(float scaleFactor, PointF pivot) {
+        x.reconfigureWithZoomFactor(scaleFactor, pivot.x);
+        y.reconfigureWithZoomFactor(scaleFactor, pivot.y);
     }
 
     private class Axis {
@@ -68,6 +85,8 @@ public class Scroller {
 
         private long startTime;
         private int duration;
+
+        private boolean interrupted = false;
 
         public void scrollBy(float delta) {
             fixPosition();
@@ -113,6 +132,10 @@ public class Scroller {
         }
 
         public boolean isEnd() {
+            if (interrupted) {
+                interrupted = false;
+                return false;
+            }
             return currentPosition == endPosition;
         }
 
@@ -123,6 +146,35 @@ public class Scroller {
             this.tension = tension;
             interpolator = LINEAR;
             endPosition = startPosition - velocity * duration / 2f;
+        }
+
+        public void offsetBy(float offset) {
+            startPosition += offset;
+            endPosition += offset;
+            currentPosition += offset;
+            interrupted = true;
+        }
+
+        public void reconfigureWithZoomFactor(float scaleFactor, float pivot) {
+            this.startPosition += pivot;
+            this.endPosition += pivot;
+            this.currentPosition += pivot;
+
+            this.startPosition *= scaleFactor;
+            this.endPosition *= scaleFactor;
+            this.currentPosition *= scaleFactor;
+
+            this.startPosition -= pivot;
+            this.endPosition -= pivot;
+            this.currentPosition -= pivot;
+
+            this.tension *= scaleFactor;
+        }
+
+        public void stopScroll() {
+            fixPosition();
+            duration = 0;
+            endPosition = startPosition;
         }
     }
 

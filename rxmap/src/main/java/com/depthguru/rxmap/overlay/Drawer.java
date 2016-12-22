@@ -16,10 +16,14 @@ public abstract class Drawer {
         }
     };
 
-    protected final Projection projection;
+    private final Projection baseProjection;
 
-    public Drawer(Projection projection) {
-        this.projection = projection;
+    public Drawer(Projection baseProjection) {
+        this.baseProjection = baseProjection;
+    }
+
+    public Projection baseProjection() {
+        return baseProjection;
     }
 
     public abstract void draw(Canvas canvas, Projection projection);

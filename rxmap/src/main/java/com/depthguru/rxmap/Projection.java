@@ -1,5 +1,7 @@
 package com.depthguru.rxmap;
 
+import android.graphics.Matrix;
+import android.graphics.PointF;
 import android.graphics.Rect;
 
 /**
@@ -16,11 +18,14 @@ public class Projection {
     private final int offsetX;
     private final int offsetY;
 
+    private final float pivotX;
+    private final float pivotY;
+
+    private final Matrix scaleMatrix = new Matrix();
+
     private final float zoom;
     private final int discreteZoom;
     private Rect screenRect;
-
-//    private final MapBounds mapBounds;
 
     public Projection(RxMapView mapView) {
         mapWidth = mapView.getWidth();
@@ -34,10 +39,12 @@ public class Projection {
         offsetX = -mapView.getScrollX();
         offsetY = -mapView.getScrollY();
 
-        screenRect = mapView.getScreenRect();
+        pivotX = mapView.pivot.x;
+        pivotY = mapView.pivot.y;
 
-//        final IGeoPoint neGeoPoint = fromPixels(mapWidth, 0, null);
-//        final IGeoPoint swGeoPoint = fromPixels(0, mapHeight, null);
+        scaleMatrix.set(mapView.scaleMatrix);
+
+        screenRect = mapView.getScreenRect();
     }
 
     public IGeoPoint fromPixels(int x, int y) {
@@ -60,12 +67,24 @@ public class Projection {
         return offsetY;
     }
 
+    public float getPivotX() {
+        return pivotX;
+    }
+
+    public float getPivotY() {
+        return pivotY;
+    }
+
     public int getWorldSize() {
         return worldSize;
     }
 
     public <R> R visit(ProjectionVisitor<R> visitor) {
         return visitor.processProjectionBounds(screenRect.left - offsetX, screenRect.top - offsetY, screenRect.right - offsetX, screenRect.bottom - offsetY, discreteZoom);
+    }
+
+    public int getDiscreteZoom() {
+        return (int) Math.floor(zoom);
     }
 
     public interface ProjectionVisitor<R> {

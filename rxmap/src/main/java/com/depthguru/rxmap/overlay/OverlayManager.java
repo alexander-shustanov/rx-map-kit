@@ -32,6 +32,7 @@ public class OverlayManager {
     public OverlayManager(Observable<Projection> projectionObservable, RxMapView mapView) {
         this.projectionObservable = projectionObservable;
         this.mapView = mapView;
+        add(new BackgroundOverlay());
     }
 
     public boolean add(Overlay overlay) {

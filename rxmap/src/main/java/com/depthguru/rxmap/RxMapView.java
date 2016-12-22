@@ -2,10 +2,11 @@ package com.depthguru.rxmap;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
+import android.graphics.PointF;
 import android.graphics.Rect;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
-import android.widget.*;
 
 import com.depthguru.rxmap.overlay.OverlayManager;
 import com.depthguru.rxmap.touch.TouchScroller;
@@ -21,20 +22,20 @@ public class RxMapView extends ViewGroup {
     private final PublishSubject<Projection> projectionSubject = PublishSubject.create();
     private final Scroller scroller;
     private final TouchScroller touchScroller;
-
     private final OverlayManager overlayManager;
 
     private Projection projection;
 
-    private float zoom = 5;
+    final Matrix scaleMatrix = new Matrix();
+    final PointF pivot = new PointF();
+    float zoom = 5.5f;
 
     public RxMapView(Context context) {
         super(context);
         overlayManager = new OverlayManager(projectionSubject, this);
         touchScroller = new MapTouchScroller(context);
         scroller = new Scroller();
-//        scroller.fling(0,0,100,100,0,10000,0,10000);
-//        scroller.startScroll(0, 0, 5000, 5000, 15000);
+        scroller.scrollBy(1000, 500);
     }
 
     @Override
@@ -44,12 +45,25 @@ public class RxMapView extends ViewGroup {
 
     @Override
     public void computeScroll() {
-
         if (scroller.computeScrollOffset()) {
+            if (scroller.isFinished()) {
+                int pivotX = getWidth() / 2;
+                int pivotY = getHeight() / 2;
+                updatePivot(pivotX, pivotY);
+            }
             scrollTo((int) scroller.getCurrX(), ((int) scroller.getCurrY()));
             computeProjection();
             invalidate();
         }
+    }
+
+    private void updatePivot(float pivotX, float pivotY) {
+        float scaleFactor = getScaleFactor();
+        float dx = pivotX - pivot.x - (pivotX - pivot.x) / scaleFactor;
+        float dy = pivotY - pivot.y - (pivotY - pivot.y) / scaleFactor;
+        scroller.offsetBy(-dx, -dy);
+        pivot.set(pivotX, pivotY);
+        invalidate();
     }
 
     private void computeProjection() {
@@ -66,14 +80,22 @@ public class RxMapView extends ViewGroup {
     protected void dispatchDraw(Canvas canvas) {
         canvas.save();
         canvas.translate(getScrollX(), getScrollY());
+        scaleMatrix.reset();
+
+        float scale = getScaleFactor();
+        scaleMatrix.preScale(scale, scale, projection.getPivotX(), projection.getPivotY());
+        canvas.concat(scaleMatrix);
 
         overlayManager.draw(canvas, projection);
-
 
         canvas.restore();
 
         super.dispatchDraw(canvas);
 
+    }
+
+    private float getScaleFactor() {
+        return (float) Math.pow(2, zoom - Math.floor(zoom));
     }
 
     public float getZoom() {
@@ -94,6 +116,21 @@ public class RxMapView extends ViewGroup {
         return new Rect(0, 0, getWidth(), getHeight());
     }
 
+    private void onZoom(float zoom, PointF pivot) {
+        int startZoom = (int) Math.floor(this.zoom);
+        this.zoom += zoom;
+        this.zoom = Math.max(Math.min(this.zoom, 19), 0);
+        int endZoom = (int) Math.floor(this.zoom);
+        float scaleFactor = (float) Math.pow(2f, endZoom - startZoom);
+        updatePivot(pivot.x, pivot.y);
+        computeProjection();
+        if (scaleFactor != 1) {
+            scroller.reconfigureWithZoomFactor(scaleFactor, pivot);
+        }
+        invalidate();
+    }
+
+
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
@@ -110,22 +147,25 @@ public class RxMapView extends ViewGroup {
 
         @Override
         protected void onScroll(float dx, float dy) {
-            scroller.scrollBy(((int) dx), (int) dy);
-//            if (!scroller.computeScrollOffset()) {
-//            } else {
-//
-//            }
-//            scrollBy(((int) dx), (int) dy);
+            float factor = getScaleFactor();
+            scroller.scrollBy(dx / factor, dy / factor);
             invalidate();
-//            scrollBy();
-//            scrollTo(dx, dy);
         }
 
         @Override
         protected void onFling(float xVelocity, float yVelocity) {
             scroller.fling(xVelocity, yVelocity);
-//            scroller.fling(scroller.getFinalX(), scroller.getFinalY(), ((int) xVelocity), ((int) yVelocity), -Integer.MAX_VALUE, Integer.MAX_VALUE, -Integer.MAX_VALUE, Integer.MAX_VALUE);
             invalidate();
+        }
+
+        @Override
+        protected void onZoom(float zoom, PointF pivot) {
+            RxMapView.this.onZoom(zoom, pivot);
+        }
+
+        @Override
+        protected void onStartMotion() {
+            scroller.stopScroll();
         }
     }
 }
