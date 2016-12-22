@@ -5,7 +5,7 @@ import android.support.v4.util.Pair;
 import com.depthguru.rxmap.Projection;
 import com.depthguru.rxmap.overlay.OverlayDataProvider;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import rx.Observable;
@@ -26,5 +26,5 @@ public abstract class MapTileProviderBase extends OverlayDataProvider<MapTileBat
                 .compose(this::processTiles);
     }
 
-    protected abstract Observable<MapTileBatch> processTiles(Observable<Pair<Projection, List<MapTile>>> listObservable);
+    protected abstract Observable<MapTileBatch> processTiles(Observable<Pair<Projection, Collection<MapTile>>> listObservable);
 }

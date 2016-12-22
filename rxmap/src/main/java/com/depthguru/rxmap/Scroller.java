@@ -39,12 +39,12 @@ public class Scroller {
         y.fling(yVelocity, duration, yVelocity / duration);
     }
 
-    public float getCurrX() {
-        return x.currentPosition;
+    public int getCurrX() {
+        return (int) x.currentPosition;
     }
 
-    public float getCurrY() {
-        return y.currentPosition;
+    public int getCurrY() {
+        return (int) y.currentPosition;
     }
 
     public boolean computeScrollOffset() {
@@ -68,17 +68,18 @@ public class Scroller {
         y.stopScroll();
     }
 
-    public void reconfigureWithZoomFactor(float scaleFactor, PointF pivot) {
-        x.reconfigureWithZoomFactor(scaleFactor, pivot.x);
-        y.reconfigureWithZoomFactor(scaleFactor, pivot.y);
+    public void reconfigureWithZoomFactor(int zoomDiff, PointF pivot, int worldSize) {
+        float scaleFactor = (float) Math.pow(2, zoomDiff);
+        x.reconfigureWithZoomFactor(scaleFactor, pivot.x, worldSize);
+        y.reconfigureWithZoomFactor(scaleFactor, pivot.y, worldSize);
     }
 
     private class Axis {
         private Interpolator interpolator = LINEAR;
 
-        private float startPosition;
-        private float currentPosition;
-        private float endPosition;
+        private double startPosition;
+        private double currentPosition;
+        private double endPosition;
 
         private float velocity;
         private float tension;
@@ -155,7 +156,7 @@ public class Scroller {
             interrupted = true;
         }
 
-        public void reconfigureWithZoomFactor(float scaleFactor, float pivot) {
+        public void reconfigureWithZoomFactor(float scaleFactor, float pivot, int worldSize) {
             this.startPosition += pivot;
             this.endPosition += pivot;
             this.currentPosition += pivot;
@@ -167,6 +168,10 @@ public class Scroller {
             this.startPosition -= pivot;
             this.endPosition -= pivot;
             this.currentPosition -= pivot;
+
+            this.startPosition %= worldSize;
+            this.endPosition %= worldSize;
+            this.currentPosition %= worldSize;
 
             this.tension *= scaleFactor;
         }

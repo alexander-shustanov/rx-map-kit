@@ -6,6 +6,7 @@ import android.support.v4.util.Pair;
 import com.depthguru.rxmap.Projection;
 import com.depthguru.rxmap.rx.MapSchedulers;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -23,7 +24,7 @@ import static rx.Observable.just;
  * alexander.shustanov on 15.12.16
  */
 public class MapTileProviderArray extends MapTileProviderBase {
-    private final TileCache tileCache = new TileCache(80);
+    private final TileCache tileCache = new TileCache(90);
     private final TileLoader loader;
 
     private final PublishSubject<MapTileState> updates = PublishSubject.create();
@@ -33,7 +34,7 @@ public class MapTileProviderArray extends MapTileProviderBase {
     }
 
     @Override
-    protected Observable<MapTileBatch> processTiles(Observable<Pair<Projection, List<MapTile>>> listObservable) {
+    protected Observable<MapTileBatch> processTiles(Observable<Pair<Projection, Collection<MapTile>>> listObservable) {
         Observable<?> updateCache =
                 updates
                         .buffer(100, TimeUnit.MILLISECONDS, 10)
@@ -54,7 +55,7 @@ public class MapTileProviderArray extends MapTileProviderBase {
                         .observeOn(MapSchedulers.tilesScheduler())
                         .map(projectionListPair -> {
                             Projection projection = projectionListPair.first;
-                            List<MapTile> mapTiles = projectionListPair.second;
+                            Collection<MapTile> mapTiles = projectionListPair.second;
                             HashMap<MapTile, Drawable> tiles = new HashMap<>();
                             for (MapTile mapTile : mapTiles) {
                                 Drawable drawable = tileCache.get(mapTile);

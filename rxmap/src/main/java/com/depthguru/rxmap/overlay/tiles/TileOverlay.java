@@ -6,6 +6,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 
 import com.depthguru.rxmap.Projection;
+import com.depthguru.rxmap.TileSystem;
 import com.depthguru.rxmap.overlay.Drawer;
 import com.depthguru.rxmap.overlay.Overlay;
 
@@ -48,7 +49,7 @@ public class TileOverlay extends Overlay<MapTileBatch> {
             Rect screenRect = projection.getScreenRect();
             int worldSize = projection.getWorldSize();
 
-            int tilSize = 256;
+            int tilSize = TileSystem.getTileSize();
 
             if (baseProjection().getDiscreteZoom() != projection.getDiscreteZoom()) {
                 int delta = projection.getDiscreteZoom() - baseProjection().getDiscreteZoom();

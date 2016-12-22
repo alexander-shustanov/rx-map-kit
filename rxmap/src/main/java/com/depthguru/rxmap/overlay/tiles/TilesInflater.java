@@ -6,20 +6,23 @@ import com.depthguru.rxmap.Projection;
 import com.depthguru.rxmap.TileSystem;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * TilesInflater
  * </p>
  * alexander.shustanov on 15.12.16
  */
-public class TilesInflater implements Projection.ProjectionVisitor<List<MapTile>> {
+public class TilesInflater implements Projection.ProjectionVisitor<Collection<MapTile>> {
     private final Point upperLeft = new Point();
     private final Point lowerRight = new Point();
 
     @Override
-    public List<MapTile> processProjectionBounds(int leftMercPx, int topMercPx, int rightMercPx, int bottomMercPx, int zoom) {
-        List<MapTile> tiles = new ArrayList<>();
+    public Collection<MapTile> processProjectionBounds(int leftMercPx, int topMercPx, int rightMercPx, int bottomMercPx, int zoom) {
+        Set<MapTile> tiles = new HashSet<>();
         TileSystem.PixelXYToTileXY(leftMercPx, topMercPx, upperLeft);
         upperLeft.offset(-1, -1);
         TileSystem.PixelXYToTileXY(rightMercPx, bottomMercPx, lowerRight);

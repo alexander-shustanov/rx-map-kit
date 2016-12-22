@@ -1,7 +1,6 @@
 package com.depthguru.rxmap;
 
 import android.graphics.Matrix;
-import android.graphics.PointF;
 import android.graphics.Rect;
 
 /**
@@ -34,7 +33,7 @@ public class Projection {
         zoom = mapView.getZoom();
         discreteZoom = (int) Math.floor(zoom);
 
-        worldSize = 256 << discreteZoom;
+        worldSize = TileSystem.getTileSize() << discreteZoom;
 
         offsetX = -mapView.getScrollX();
         offsetY = -mapView.getScrollY();

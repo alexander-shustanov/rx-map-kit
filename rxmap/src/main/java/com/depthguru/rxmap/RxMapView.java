@@ -23,6 +23,8 @@ public class RxMapView extends ViewGroup {
     private final Scroller scroller;
     private final TouchScroller touchScroller;
     private final OverlayManager overlayManager;
+    private final int MIN_ZOOM = 0;
+    private final int MAX_ZOOM = 18;
 
     private Projection projection;
 
@@ -32,6 +34,7 @@ public class RxMapView extends ViewGroup {
 
     public RxMapView(Context context) {
         super(context);
+//        TileSystem.setTileSize(512);
         overlayManager = new OverlayManager(projectionSubject, this);
         touchScroller = new MapTouchScroller(context);
         scroller = new Scroller();
@@ -119,13 +122,13 @@ public class RxMapView extends ViewGroup {
     private void onZoom(float zoom, PointF pivot) {
         int startZoom = (int) Math.floor(this.zoom);
         this.zoom += zoom;
-        this.zoom = Math.max(Math.min(this.zoom, 19), 0);
+        this.zoom = Math.max(Math.min(this.zoom, MAX_ZOOM), MIN_ZOOM);
         int endZoom = (int) Math.floor(this.zoom);
-        float scaleFactor = (float) Math.pow(2f, endZoom - startZoom);
+        int zoomDiff = endZoom - startZoom;
         updatePivot(pivot.x, pivot.y);
         computeProjection();
-        if (scaleFactor != 1) {
-            scroller.reconfigureWithZoomFactor(scaleFactor, pivot);
+        if (zoomDiff != 0) {
+            scroller.reconfigureWithZoomFactor(zoomDiff, pivot, TileSystem.getTileSize() << endZoom);
         }
         invalidate();
     }
