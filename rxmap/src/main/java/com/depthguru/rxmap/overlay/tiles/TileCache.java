@@ -1,6 +1,5 @@
 package com.depthguru.rxmap.overlay.tiles;
 
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.SparseArray;
 

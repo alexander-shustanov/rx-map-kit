@@ -1,7 +1,7 @@
 package com.depthguru.rxmap.rx;
 
 import android.os.HandlerThread;
-import android.os.Looper;
+import android.support.annotation.NonNull;
 
 import rx.Scheduler;
 import rx.android.schedulers.AndroidSchedulers;
@@ -13,23 +13,27 @@ import rx.android.schedulers.AndroidSchedulers;
  */
 public class MapSchedulers {
 
+    private static Scheduler tilesBatchAssembleScheduler;
     private static Scheduler tilesScheduler;
-    private static Looper tileLooper;
 
     public static Scheduler tilesScheduler() {
         if (tilesScheduler == null) {
-            HandlerThread tilesHandlerThread = new HandlerThread("tilesScheduler");
-            tilesHandlerThread.start();
-            tileLooper = tilesHandlerThread.getLooper();
-            tilesScheduler = AndroidSchedulers.from(tileLooper);
+            tilesScheduler = createHandlerScheduler(new HandlerThread("tilesScheduler"));
         }
         return tilesScheduler;
     }
 
-    public static Looper getTileLooper() {
-        if (tileLooper == null) {
-            tilesScheduler();
+    public static Scheduler tilesBatchAssembleScheduler() {
+        if (tilesBatchAssembleScheduler == null) {
+            tilesBatchAssembleScheduler = createHandlerScheduler(new HandlerThread("tilesBatchAssembleScheduler"));
         }
-        return tileLooper;
+        return tilesBatchAssembleScheduler;
+    }
+
+    @NonNull
+    private static Scheduler createHandlerScheduler(HandlerThread name) {
+        HandlerThread tilesHandlerThread = name;
+        tilesHandlerThread.start();
+        return AndroidSchedulers.from(tilesHandlerThread.getLooper());
     }
 }

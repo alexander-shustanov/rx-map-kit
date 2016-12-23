@@ -22,7 +22,7 @@ import rx.subscriptions.CompositeSubscription;
  */
 public class TileLoader extends Thread {
     private final CompositeSubscription subscription = new CompositeSubscription();
-    private final BlockingQueue<MapTileState> queue = new LinkedBlockingQueue<>(10);
+    private final BlockingQueue<MapTileState> queue = new LinkedBlockingQueue<>(4);
     private final PublishSubject<MapTileState> loadResultConveyor = PublishSubject.create();
     private final List<MapTileProviderModule> modules;
     private final ExecutorService executor;
@@ -35,7 +35,7 @@ public class TileLoader extends Thread {
      */
     public TileLoader(List<MapTileProviderModule> modules, Observer<MapTileState> successLoaded) {
         this.modules = modules;
-        executor = new ThreadPoolExecutor(2, 4, 5, TimeUnit.SECONDS, new LinkedBlockingQueue<>(20));
+        executor = new ThreadPoolExecutor(2, 2, 5, TimeUnit.SECONDS, new LinkedBlockingQueue<>(20));
 
         Subscription subscription = loadResultConveyor
                 .filter(mapTileState -> mapTileState.getDrawable() != null)

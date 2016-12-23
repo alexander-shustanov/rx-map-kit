@@ -16,7 +16,8 @@ import android.graphics.Point;
  */
 public final class TileSystem {
 
-	protected static int mTileSize = 256;
+	private static final int BASE_TILE_SIZE = 256;
+	private static int mTileSize = BASE_TILE_SIZE;
 	private static final double EarthRadius = 6378137;
 	private static final double MinLatitude = -85.05112878;
 	private static final double MaxLatitude = 85.05112878;
@@ -46,7 +47,7 @@ public final class TileSystem {
 
 	/**
 	 * Clips a number to the specified minimum and maximum values.
-	 * 
+	 *
 	 * @param n
 	 *            The number to clip
 	 * @param minValue
@@ -61,7 +62,7 @@ public final class TileSystem {
 
 	/**
 	 * Determines the map width and height (in pixels) at a specified level of detail.
-	 * 
+	 *
 	 * @param levelOfDetail
 	 *            Level of detail, from 1 (lowest detail) to 23 (highest detail)
 	 * @return The map width and height in pixels
@@ -75,7 +76,7 @@ public final class TileSystem {
 	/**
 	 * Determines the ground resolution (in meters per pixel) at a specified latitude and level of
 	 * detail.
-	 * 
+	 *
 	 * @param latitude
 	 *            Latitude (in degrees) at which to measure the ground resolution
 	 * @param levelOfDetail
@@ -90,7 +91,7 @@ public final class TileSystem {
 
 	/**
 	 * Determines the map scale at a specified latitude, level of detail, and screen resolution.
-	 * 
+	 *
 	 * @param latitude
 	 *            Latitude (in degrees) at which to measure the map scale
 	 * @param levelOfDetail
@@ -107,7 +108,7 @@ public final class TileSystem {
 	/**
 	 * Converts a point from latitude/longitude WGS-84 coordinates (in degrees) into pixel XY
 	 * coordinates at a specified level of detail.
-	 * 
+	 *
 	 * @param latitude
 	 *            Latitude of the point, in degrees
 	 * @param longitude
@@ -138,7 +139,7 @@ public final class TileSystem {
 	/**
 	 * Converts a pixel from pixel XY coordinates at a specified level of detail into
 	 * latitude/longitude WGS-84 coordinates (in degrees).
-	 * 
+	 *
 	 * @param pixelX
 	 *            X coordinate of the point, in pixels
 	 * @param pixelY
@@ -168,7 +169,7 @@ public final class TileSystem {
 	/**
 	 * Converts pixel XY coordinates into tile XY coordinates of the tile containing the specified
 	 * pixel.
-	 * 
+	 *
 	 * @param pixelX
 	 *            Pixel X coordinate
 	 * @param pixelY
@@ -188,7 +189,7 @@ public final class TileSystem {
 	/**
 	 * Converts tile XY coordinates into pixel XY coordinates of the upper-left pixel of the
 	 * specified tile.
-	 * 
+	 *
 	 * @param tileX
 	 *            Tile X coordinate
 	 * @param tileY
@@ -207,7 +208,7 @@ public final class TileSystem {
 
 	/**
 	 * Converts tile XY coordinates into a QuadKey at a specified level of detail.
-	 * 
+	 *
 	 * @param tileX
 	 *            Tile X coordinate
 	 * @param tileY
@@ -235,7 +236,7 @@ public final class TileSystem {
 
 	/**
 	 * Converts a QuadKey into tile XY coordinates.
-	 * 
+	 *
 	 * @param quadKey
 	 *            QuadKey of the tile
 	 * @param reuse
@@ -273,5 +274,13 @@ public final class TileSystem {
 		}
 		out.set(tileX, tileY);
 		return out;
+	}
+
+	public static void setScaledToDensity(float density) {
+		setTileSize((int) (BASE_TILE_SIZE *density));
+	}
+
+	public static void restoreTileSize() {
+		setTileSize(BASE_TILE_SIZE);
 	}
 }

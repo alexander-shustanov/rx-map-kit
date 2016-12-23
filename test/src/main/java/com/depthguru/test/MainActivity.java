@@ -5,12 +5,7 @@ import android.os.Bundle;
 
 import com.depthguru.rxmap.RxMapView;
 import com.depthguru.rxmap.overlay.OverlayManager;
-import com.depthguru.rxmap.overlay.tiles.MapTileProviderArray;
-import com.depthguru.rxmap.overlay.tiles.MapTileProviderModule;
-import com.depthguru.rxmap.overlay.tiles.MapnikProviderModule;
 import com.depthguru.rxmap.overlay.tiles.TileOverlay;
-
-import java.util.Collections;
 
 public class MainActivity extends Activity {
 
@@ -22,6 +17,8 @@ public class MainActivity extends Activity {
         OverlayManager overlayManager = mapView.getOverlayManager();
 
         overlayManager.add(new TileOverlay(this));
+
+        mapView.setTilesScaledToDpi(true);
 
         setContentView(mapView);
     }

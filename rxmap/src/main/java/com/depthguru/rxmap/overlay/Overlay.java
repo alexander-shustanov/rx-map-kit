@@ -25,8 +25,13 @@ public abstract class Overlay<D> {
         Observable<Drawer> realDrawer = projectionObservable
                 .compose(this::setupProjectionSubscribe)
                 .compose(dataProvider::fetch)
+                .compose(this::dataPostPrecess)
                 .map(this::createDrawer);
         return concat(emptyDrawer, realDrawer);
+    }
+
+    protected Observable<D> dataPostPrecess(Observable<D> dataObservable) {
+        return dataObservable;
     }
 
     protected Observable<Projection> setupProjectionSubscribe(Observable<Projection> projectionObservable) {

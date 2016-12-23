@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
+import android.support.annotation.Nullable;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -21,10 +22,18 @@ import rx.subjects.PublishSubject;
  * alexander.shustanov on 16.12.16
  */
 public class MapnikProviderModule extends MapTileProviderModule {
+    private final BitmapFactory.Options opts = new BitmapFactory.Options();
     private final Context context;
 
-    public MapnikProviderModule(Context context) {
+    public MapnikProviderModule(Context context, @Nullable Bitmap.Config config) {
         this.context = context;
+        if (config != null) {
+            opts.inPreferredConfig = config;
+        }
+    }
+
+    public MapnikProviderModule(Context context) {
+        this(context, null);
     }
 
     @Override
@@ -34,12 +43,13 @@ public class MapnikProviderModule extends MapTileProviderModule {
             URL url = null;
             try {
                 url = new URL(String.format("http://a.tile.openstreetmap.org/%s/%s/%s.png", mapTile.getZoomLevel(), mapTile.getX(), mapTile.getY()));
+                HttpURLConnection connection = null;
                 try {
-                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                    connection = (HttpURLConnection) url.openConnection();
                     connection.setDoInput(true);
                     connection.connect();
                     InputStream input = connection.getInputStream();
-                    Bitmap bitmap = BitmapFactory.decodeStream(input);
+                    Bitmap bitmap = BitmapFactory.decodeStream(input, null, opts);
                     BitmapDrawable drawable = new BitmapDrawable(context.getResources(), bitmap);
 
                     File file = new File(context.getCacheDir(), String.format("%s/%s/%s.png", mapTile.getZoomLevel(), mapTile.getX(), mapTile.getY()));
@@ -52,6 +62,10 @@ public class MapnikProviderModule extends MapTileProviderModule {
                     mapTileState.setDrawable(drawable);
                 } catch (IOException e) {
                     mapTileState.incState();
+                } finally {
+                    if(connection != null) {
+                        connection.disconnect();
+                    }
                 }
                 loadSorter.onNext(mapTileState);
             } catch (MalformedURLException e) {

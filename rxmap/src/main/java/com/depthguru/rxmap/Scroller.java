@@ -14,7 +14,7 @@ public class Scroller {
     private static final Interpolator LINEAR = new LinearInterpolator();
     private static final Interpolator DECELERATE = new DecelerateInterpolator();
 
-    private static final float TENSION = 0.007f;
+    private static final float TENSION = 0.012f;
 
     private Axis x = new Axis();
     private Axis y = new Axis();

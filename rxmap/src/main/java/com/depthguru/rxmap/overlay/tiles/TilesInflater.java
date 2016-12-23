@@ -2,13 +2,12 @@ package com.depthguru.rxmap.overlay.tiles;
 
 import android.graphics.Point;
 
+import com.depthguru.rxmap.MathUtils;
 import com.depthguru.rxmap.Projection;
 import com.depthguru.rxmap.TileSystem;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -32,23 +31,13 @@ public class TilesInflater implements Projection.ProjectionVisitor<Collection<Ma
         for (int y = upperLeft.y; y <= lowerRight.y; y++) {
             for (int x = upperLeft.x; x <= lowerRight.x; x++) {
                 // Construct a MapTile to request from the tile provider.
-                final int tileY = mod(y, mapTileUpperBound);
-                final int tileX = mod(x, mapTileUpperBound);
+                final int tileY = MathUtils.mod(y, mapTileUpperBound);
+                final int tileX = MathUtils.mod(x, mapTileUpperBound);
                 final MapTile tile = new MapTile(tileX, tileY, zoom);
                 tiles.add(tile);
             }
         }
 
         return tiles;
-    }
-
-    public static int mod(int number, int modulus) {
-        if (number > 0)
-            return number % modulus;
-
-        while (number < 0)
-            number += modulus;
-
-        return number;
     }
 }

@@ -24,7 +24,7 @@ import static rx.Observable.just;
  * alexander.shustanov on 15.12.16
  */
 public class MapTileProviderArray extends MapTileProviderBase {
-    private final TileCache tileCache = new TileCache(90);
+    private final TileCache tileCache = new TileCache(30);
     private final TileLoader loader;
 
     private final PublishSubject<MapTileState> updates = PublishSubject.create();

@@ -19,22 +19,21 @@ import rx.subjects.PublishSubject;
  * alexander.shustanov on 15.12.16
  */
 public class RxMapView extends ViewGroup {
+    final Matrix scaleMatrix = new Matrix();
+    final PointF pivot = new PointF();
     private final PublishSubject<Projection> projectionSubject = PublishSubject.create();
     private final Scroller scroller;
     private final TouchScroller touchScroller;
     private final OverlayManager overlayManager;
-    private final int MIN_ZOOM = 0;
-    private final int MAX_ZOOM = 18;
-
-    private Projection projection;
-
-    final Matrix scaleMatrix = new Matrix();
-    final PointF pivot = new PointF();
+    private final float MIN_ZOOM = 0.0f;
+    private final float MAX_ZOOM = 18.5f;
     float zoom = 5.5f;
+    private Projection projection;
 
     public RxMapView(Context context) {
         super(context);
-//        TileSystem.setTileSize(512);
+        setBackground(null);
+
         overlayManager = new OverlayManager(projectionSubject, this);
         touchScroller = new MapTouchScroller(context);
         scroller = new Scroller();
@@ -54,9 +53,9 @@ public class RxMapView extends ViewGroup {
                 int pivotY = getHeight() / 2;
                 updatePivot(pivotX, pivotY);
             }
-            scrollTo((int) scroller.getCurrX(), ((int) scroller.getCurrY()));
+            scrollTo(scroller.getCurrX(), scroller.getCurrY());
             computeProjection();
-            invalidate();
+            postInvalidate();
         }
     }
 
@@ -140,6 +139,15 @@ public class RxMapView extends ViewGroup {
         projectionSubject.onCompleted();
         overlayManager.detach();
         touchScroller.detach();
+    }
+
+    public void setTilesScaledToDpi(boolean tilesScaledToDpi) {
+        if (tilesScaledToDpi) {
+            float density = getResources().getDisplayMetrics().density;
+            TileSystem.setScaledToDensity(density);
+        } else {
+            TileSystem.restoreTileSize();
+        }
     }
 
     private class MapTouchScroller extends TouchScroller {
