@@ -1,6 +1,7 @@
 package com.depthguru.rxmap;
 
 import android.graphics.PointF;
+import android.view.animation.AnimationUtils;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
@@ -81,8 +82,8 @@ public class Scroller {
         private double currentPosition;
         private double endPosition;
 
-        private float velocity;
-        private float tension;
+        private double velocity;
+        private double tension;
 
         private long startTime;
         private int duration;
@@ -98,9 +99,9 @@ public class Scroller {
 
         private void fixPosition() {
             computeCurrentValue();
-            this.velocity = 0;
-            this.tension = 0;
-            startTime = System.currentTimeMillis();
+            tension = 0.0;
+            velocity = 0.0;
+            startTime = AnimationUtils.currentAnimationTimeMillis();
             startPosition = currentPosition;
         }
 
@@ -111,20 +112,20 @@ public class Scroller {
             float normalTime = getNormalTime();
             if (normalTime == 1f) {
                 currentPosition = endPosition;
-                velocity = 0;
-                tension = 0;
+                velocity = 0.0;
+                tension = 0.0;
             } else {
                 if (velocity != 0) {
-                    float time = normalTime * duration;
-                    currentPosition = startPosition + (tension * time / 2f - velocity) * time;
+                    double time = normalTime * duration;
+                    currentPosition = (startPosition + (tension * time / 2.0 - velocity) * time);
                 } else {
-                    currentPosition = normalTime * (endPosition - startPosition) + startPosition;
+                    currentPosition = (normalTime * (endPosition - startPosition) + startPosition);
                 }
             }
         }
 
         public float getNormalTime() {
-            long now = System.currentTimeMillis();
+            long now = AnimationUtils.currentAnimationTimeMillis();
             long delta = now - startTime;
             if (delta >= duration) {
                 return 1f;
@@ -146,7 +147,7 @@ public class Scroller {
             this.duration = duration;
             this.tension = tension;
             interpolator = LINEAR;
-            endPosition = startPosition - velocity * duration / 2f;
+            endPosition = (startPosition - velocity * duration / 2f);
         }
 
         public void offsetBy(float offset) {

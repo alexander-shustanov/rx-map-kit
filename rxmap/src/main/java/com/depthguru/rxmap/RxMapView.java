@@ -143,7 +143,7 @@ public class RxMapView extends ViewGroup {
 
     public void setTilesScaledToDpi(boolean tilesScaledToDpi) {
         if (tilesScaledToDpi) {
-            float density = getResources().getDisplayMetrics().density;
+            float density = Math.max(getResources().getDisplayMetrics().density / 1.5f, 1f);
             TileSystem.setScaledToDensity(density);
         } else {
             TileSystem.restoreTileSize();
