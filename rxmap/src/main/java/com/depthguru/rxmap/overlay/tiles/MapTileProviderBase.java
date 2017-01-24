@@ -1,6 +1,6 @@
 package com.depthguru.rxmap.overlay.tiles;
 
-import android.support.v4.util.Pair;
+import android.util.Pair;
 
 import com.depthguru.rxmap.Projection;
 import com.depthguru.rxmap.overlay.OverlayDataProvider;

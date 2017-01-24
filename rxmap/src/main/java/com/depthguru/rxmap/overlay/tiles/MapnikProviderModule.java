@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
+import android.os.Build;
 import android.support.annotation.Nullable;
 
 import java.io.File;
@@ -50,6 +51,9 @@ public class MapnikProviderModule extends MapTileProviderModule {
                     connection.connect();
                     InputStream input = connection.getInputStream();
                     Bitmap bitmap = BitmapFactory.decodeStream(input, null, opts);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                        bitmap.setHasMipMap(true);
+                    }
                     BitmapDrawable drawable = new BitmapDrawable(context.getResources(), bitmap);
 
                     File file = new File(context.getCacheDir(), String.format("%s/%s/%s.png", mapTile.getZoomLevel(), mapTile.getX(), mapTile.getY()));

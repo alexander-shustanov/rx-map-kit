@@ -1,7 +1,7 @@
 package com.depthguru.rxmap.overlay.tiles;
 
 import android.graphics.drawable.Drawable;
-import android.support.v4.util.Pair;
+import android.util.Pair;
 
 import com.depthguru.rxmap.Projection;
 import com.depthguru.rxmap.rx.MapSchedulers;
@@ -24,7 +24,7 @@ import static rx.Observable.just;
  * alexander.shustanov on 15.12.16
  */
 public class MapTileProviderArray extends MapTileProviderBase {
-    private final TileCache tileCache = new TileCache(30);
+    private final TileCache tileCache = new TileCache(40);
     private final TileLoader loader;
 
     private final PublishSubject<MapTileState> updates = PublishSubject.create();
