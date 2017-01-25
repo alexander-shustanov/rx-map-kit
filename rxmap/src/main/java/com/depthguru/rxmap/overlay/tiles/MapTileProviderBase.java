@@ -21,7 +21,7 @@ public abstract class MapTileProviderBase extends OverlayDataProvider<MapTileBat
     @Override
     public Observable<MapTileBatch> fetch(Observable<Projection> observable) {
         return observable
-                .throttleLast(300, TimeUnit.MILLISECONDS)
+                .throttleLast(500, TimeUnit.MILLISECONDS)
                 .map(projection -> new Pair<>(projection, projection.visit(tilesInflater)))
                 .compose(this::processTiles);
     }

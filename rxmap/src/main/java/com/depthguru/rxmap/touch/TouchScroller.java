@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.PointF;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.view.MotionEvent;
 import android.view.ViewConfiguration;
 
@@ -14,7 +15,6 @@ import android.view.ViewConfiguration;
  */
 public abstract class TouchScroller {
     private final Handler handler = new Handler(Looper.getMainLooper());
-    private final Context context;
 
     private final float touchSlop;
 
@@ -24,8 +24,9 @@ public abstract class TouchScroller {
     private final Runnable detectLongPress = this::performLongPress;
     private final Runnable rejectTap;
 
+    private PointF tapToken;
+
     protected TouchScroller(Context context) {
-        this.context = context;
         touchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
         state = new TouchState(touchSlop);
         rejectTap = state::rejectTap;
@@ -48,7 +49,7 @@ public abstract class TouchScroller {
                 handlePointerUp(event);
                 break;
             case MotionEvent.ACTION_UP:
-                handleActionUp();
+                handleActionUp(event);
                 break;
         }
 
@@ -64,15 +65,35 @@ public abstract class TouchScroller {
         state.onPointerDown(event);
     }
 
-    private void handleActionUp() {
+    private void handleActionUp(MotionEvent event) {
         if (state.canPerformTap()) {
-            onTap();
+            if(tapToken == null) {
+                tapToken = new PointF(event.getX(), event.getY());
+                postTap(event);
+            } else {
+                if (Math.abs(tapToken.x - event.getX()) < touchSlop*2 && Math.abs(tapToken.y - event.getY()) < touchSlop*2) {
+                    handler.removeCallbacks(null, tapToken);
+                    performDoubleTap(event);
+                } else {
+                    tapToken.set(event.getX(), event.getY());
+                    postTap(event);
+                }
+            }
         } else if (state.canPerformFling()) {
             state.computeVelocity(reuse);
             onFling(reuse.x, reuse.y);
         }
         handler.removeCallbacks(detectLongPress);
         handler.removeCallbacks(rejectTap);
+    }
+
+    private void performDoubleTap(MotionEvent event) {
+        tapToken = null;
+        onDoubleTap(event.getX(), event.getY());
+    }
+
+    private void postTap(MotionEvent event) {
+        handler.postAtTime(() -> performTap(event.getX(), event.getY()), tapToken, SystemClock.uptimeMillis() + 500);
     }
 
     private void handleActionDown(MotionEvent event) {
@@ -93,7 +114,7 @@ public abstract class TouchScroller {
                 state.computeScroll(event, reuse);
                 performScroll(reuse);
             }
-            if(state.inZoom()) {
+            if (state.inZoom()) {
                 float zoom = state.computeZoom(event, reuse);
                 performZoom(zoom, reuse);
             }
@@ -104,9 +125,11 @@ public abstract class TouchScroller {
         onZoom(zoom, pivot);
     }
 
-    protected void onStartMotion() {}
+    protected void onStartMotion() {
+    }
 
-    protected void onZoom(float zoom, PointF pivot) {}
+    protected void onZoom(float zoom, PointF pivot) {
+    }
 
     private void performScroll(PointF scrollOffset) {
         onScroll(scrollOffset.x, scrollOffset.y);
@@ -118,6 +141,8 @@ public abstract class TouchScroller {
         }
     }
 
+    protected void onDoubleTap(float x, float y) {}
+
     protected boolean onLongTap() {
         return false;
     }
@@ -125,7 +150,14 @@ public abstract class TouchScroller {
     protected void onScroll(float dx, float dy) {
     }
 
-    protected void onTap() {
+    private void performTap(float x, float y) {
+        onTap(x, y);
+        if(!handler.hasMessages(0, tapToken)) {
+            tapToken = null;
+        }
+    }
+
+    protected void onTap(float x, float y) {
     }
 
     protected void onFling(float xVelocity, float yVelocity) {

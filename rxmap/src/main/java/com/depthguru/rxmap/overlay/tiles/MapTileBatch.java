@@ -92,10 +92,13 @@ public class MapTileBatch {
                 if (getTile(currentZoomEquivalent) != null) {
                     continue;
                 }
+
+                mapTiles.add(mapTile);
+                tiles.put(mapTile, last.getTile(mapTile));
             } else {
                 int range = 1 << zoomDelta;
-                int xRange = Math.min(tileX + range, tilesRect.right + 1) - tileX;
-                int yRange = Math.min(tileY + range, tilesRect.top + 1) - tileY;
+                int xRange = Math.min(tileX + range, tilesRect.right) - tileX;
+                int yRange = Math.min(tileY + range, tilesRect.top) - tileY;
                 for (int i = 0; i <= xRange; i++) {
                     for (int j = 0; j <= yRange; j++) {
                         MapTile currentZoomEquivalent = new MapTile(tileX + i, tileY + j, zoom);
@@ -107,9 +110,6 @@ public class MapTileBatch {
                     }
                 }
             }
-
-            mapTiles.add(mapTile);
-            tiles.put(mapTile, last.getTile(mapTile));
         }
 
         sortList();
