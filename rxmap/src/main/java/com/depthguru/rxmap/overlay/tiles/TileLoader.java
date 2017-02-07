@@ -31,9 +31,9 @@ public class TileLoader extends Thread {
 
     /**
      * @param modules List of modules sorted by priority
-     * @param successLoaded observer observing success loadede tiles
+     * @param successLoadedObserver observer observing success loadede tiles
      */
-    public TileLoader(List<MapTileProviderModule> modules, Observer<MapTileState> successLoaded) {
+    public TileLoader(List<MapTileProviderModule> modules, Observer<MapTileState> successLoadedObserver) {
         this.modules = modules;
         executor = new ThreadPoolExecutor(2, 2, 5, TimeUnit.SECONDS, new LinkedBlockingQueue<>(20));
 
@@ -48,7 +48,7 @@ public class TileLoader extends Thread {
                         }
                     }
                 })
-                .subscribe(successLoaded);
+                .subscribe(successLoadedObserver);
         this.subscription.add(subscription);
 
         subscription = loadResultConveyor

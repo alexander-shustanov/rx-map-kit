@@ -4,6 +4,8 @@ import android.graphics.Canvas;
 
 import com.depthguru.rxmap.Projection;
 import com.depthguru.rxmap.RxMapView;
+import com.depthguru.rxmap.rx.MapSchedulers;
+import com.depthguru.rxmap.rx.SingleItemBuffer;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -12,7 +14,6 @@ import java.util.List;
 import rx.Observable;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
 import rx.subscriptions.CompositeSubscription;
 
 import static rx.Observable.combineLatest;
@@ -47,8 +48,8 @@ public class OverlayManager {
         drawersSubscription.unsubscribe();
         List<Observable<Drawer>> drawerObservables = new ArrayList<>();
         Observable<Projection> projectionObservable = this.projectionObservable
-                .onBackpressureBuffer(1, null, () -> true)
-                .observeOn(Schedulers.computation());
+                .compose(SingleItemBuffer.dropOldest())
+                .observeOn(MapSchedulers.overlayScheduler());
         for (Overlay overlay : overlays) {
             drawerObservables.add(projectionObservable
                     .compose(overlay::createDrawer));

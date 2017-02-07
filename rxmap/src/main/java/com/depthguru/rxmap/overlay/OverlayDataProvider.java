@@ -10,7 +10,7 @@ import rx.Observable;
  * alexander.shustanov on 16.12.16
  */
 public abstract class OverlayDataProvider<D> {
-    public abstract Observable<D> fetch(Observable<Projection> dObservable);
+    public abstract Observable<D> fetch(Observable<Projection> projectionObservable);
 
     protected void detach() {}
 }

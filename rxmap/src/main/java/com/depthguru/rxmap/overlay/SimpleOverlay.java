@@ -16,8 +16,8 @@ public abstract class SimpleOverlay extends Overlay<Projection> {
 
     private static class ProjectionOverlayDataProvider extends OverlayDataProvider<Projection> {
         @Override
-        public Observable<Projection> fetch(Observable<Projection> observable) {
-            return observable;
+        public Observable<Projection> fetch(Observable<Projection> projectionObservable) {
+            return projectionObservable;
         }
     }
 }

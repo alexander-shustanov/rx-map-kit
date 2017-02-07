@@ -53,7 +53,7 @@ public class TileCache {
     }
 
     public void detach() {
-//        for (Item item : tiles.values()) {
+//        for (ItemWithPixelCoordinates item : tiles.values()) {
 //            if (item.drawable instanceof BitmapDrawable) {
 //                ((BitmapDrawable) item.drawable).getBitmap().recycle();
 //            }

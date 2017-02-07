@@ -13,6 +13,7 @@ import com.depthguru.rxmap.overlay.Drawer;
 import com.depthguru.rxmap.overlay.Overlay;
 import com.depthguru.rxmap.rx.MapSchedulers;
 import com.depthguru.rxmap.rx.ProcessWithLast;
+import com.depthguru.rxmap.rx.SingleItemBuffer;
 
 import java.util.Arrays;
 
@@ -34,20 +35,12 @@ public class TileOverlay extends Overlay<MapTileBatch> {
     }
 
     @Override
-    protected Observable<MapTileBatch> dataPostPrecess(Observable<MapTileBatch> dataObservable) {
+    protected Observable<MapTileBatch> postProcessData(Observable<MapTileBatch> dataObservable) {
         return super
-                .dataPostPrecess(dataObservable)
-                .onBackpressureDrop()
+                .postProcessData(dataObservable)
+                .compose(SingleItemBuffer.dropOldest())
                 .observeOn(MapSchedulers.tilesBatchAssembleScheduler())
-                .compose(ProcessWithLast.of(this::combineOverlays));
-    }
-
-    private MapTileBatch combineOverlays(MapTileBatch current, MapTileBatch last) {
-        if (last == null) {
-            return current;
-        }
-
-        return current.completeWith(last);
+                .lift(ProcessWithLast.of(MapTileBatch::completeWith));
     }
 
     @Override
@@ -71,9 +64,6 @@ public class TileOverlay extends Overlay<MapTileBatch> {
 
             Rect screenRect = projection.getScreenRect();
             int worldSize = projection.getWorldSize();
-
-            startX = MathUtils.mod(startX, worldSize);
-            startY = MathUtils.mod(startY, worldSize);
 
             int repeatsX = screenRect.width() / worldSize;
             int repeatsY = screenRect.height() / worldSize;

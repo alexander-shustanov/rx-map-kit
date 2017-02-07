@@ -13,15 +13,12 @@ import rx.Observable;
  * </p>
  * alexander.shustanov on 22.12.16
  */
-class BackgroundOverlay extends SimpleOverlay {
-    private static final int GRID_DENSITY;
+public class BackgroundOverlay extends SimpleOverlay {
 
     private static final Paint backgroundPaint = new Paint();
     private static final Paint linesPaint = new Paint();
 
     static {
-        GRID_DENSITY = (int) (16* Resources.getSystem().getDisplayMetrics().density);
-
         backgroundPaint.setStyle(Paint.Style.FILL);
         backgroundPaint.setColor(0xffd1d1d1);
 
@@ -38,25 +35,7 @@ class BackgroundOverlay extends SimpleOverlay {
         return new Drawer(projection) {
             @Override
             public void draw(Canvas canvas, Projection projection) {
-                int offsetX = projection.getOffsetX();
-                int offsetY = projection.getOffsetY();
-                offsetX %= GRID_DENSITY;
-                offsetY %= GRID_DENSITY;
-
-                offsetX -= GRID_DENSITY;
-                offsetY -= GRID_DENSITY;
-
                 canvas.drawRect(projection.getScreenRect(), backgroundPaint);
-
-//                for (int i = -1; i <= projection.getScreenRect().width() / GRID_DENSITY; i++) {
-//                    canvas.drawLine(offsetX, 0, offsetX, projection.getScreenRect().height(), linesPaint);
-//                    offsetX += GRID_DENSITY;
-//                }
-//
-//                for (int j = -1; j <= projection.getScreenRect().height() / GRID_DENSITY; j++) {
-//                    canvas.drawLine(0, offsetY, projection.getScreenRect().width(), offsetY, linesPaint);
-//                    offsetY += GRID_DENSITY;
-//                }
             }
         };
     }

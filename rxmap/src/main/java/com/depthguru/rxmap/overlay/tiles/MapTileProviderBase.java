@@ -19,8 +19,8 @@ public abstract class MapTileProviderBase extends OverlayDataProvider<MapTileBat
     private final TilesInflater tilesInflater = new TilesInflater();
 
     @Override
-    public Observable<MapTileBatch> fetch(Observable<Projection> observable) {
-        return observable
+    public Observable<MapTileBatch> fetch(Observable<Projection> projectionObservable) {
+        return projectionObservable
                 .throttleLast(500, TimeUnit.MILLISECONDS)
                 .map(projection -> new Pair<>(projection, projection.visit(tilesInflater)))
                 .compose(this::processTiles);

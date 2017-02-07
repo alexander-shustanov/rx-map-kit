@@ -15,12 +15,20 @@ public class MapSchedulers {
 
     private static Scheduler tilesBatchAssembleScheduler;
     private static Scheduler tilesScheduler;
+    private static Scheduler overlayScheduler;
 
     public static Scheduler tilesScheduler() {
         if (tilesScheduler == null) {
             tilesScheduler = createHandlerScheduler(new HandlerThread("tilesScheduler"));
         }
         return tilesScheduler;
+    }
+
+    public static Scheduler overlayScheduler() {
+        if (overlayScheduler == null) {
+            overlayScheduler = createHandlerScheduler(new HandlerThread("overlayScheduler"));
+        }
+        return overlayScheduler;
     }
 
     public static Scheduler tilesBatchAssembleScheduler() {

@@ -1,8 +1,10 @@
 package com.depthguru.rxmap.overlay;
 
 import com.depthguru.rxmap.Projection;
+import com.depthguru.rxmap.rx.SingleItemBuffer;
 
 import rx.Observable;
+import rx.android.schedulers.AndroidSchedulers;
 
 import static rx.Observable.concat;
 import static rx.Observable.just;
@@ -23,14 +25,15 @@ public abstract class Overlay<D> {
     final Observable<Drawer> createDrawer(Observable<Projection> projectionObservable) {
         Observable<Drawer> emptyDrawer = just(Drawer.EMPTY_DRAWER);
         Observable<Drawer> realDrawer = projectionObservable
+                .filter(projection -> projection.getDiscreteZoom() >= getMinZoom() && projection.getDiscreteZoom() <= getMaxZoom())
                 .compose(this::setupProjectionSubscribe)
                 .compose(dataProvider::fetch)
-                .compose(this::dataPostPrecess)
+                .compose(this::postProcessData)
                 .map(this::createDrawer);
-        return concat(emptyDrawer, realDrawer);
+        return concat(emptyDrawer, realDrawer).compose(SingleItemBuffer.dropOldest()).observeOn(AndroidSchedulers.mainThread());
     }
 
-    protected Observable<D> dataPostPrecess(Observable<D> dataObservable) {
+    protected Observable<D> postProcessData(Observable<D> dataObservable) {
         return dataObservable;
     }
 
@@ -43,4 +46,13 @@ public abstract class Overlay<D> {
     protected void detach() {
         dataProvider.detach();
     }
+
+    public int getMinZoom() {
+        return 0;
+    }
+
+    public int getMaxZoom() {
+        return 23;
+    }
+
 }

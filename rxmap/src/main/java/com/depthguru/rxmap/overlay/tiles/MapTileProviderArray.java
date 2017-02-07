@@ -1,10 +1,14 @@
 package com.depthguru.rxmap.overlay.tiles;
 
+import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
+import android.util.DisplayMetrics;
 import android.util.Pair;
 
 import com.depthguru.rxmap.Projection;
+import com.depthguru.rxmap.TileSystem;
 import com.depthguru.rxmap.rx.MapSchedulers;
+import com.depthguru.rxmap.rx.SingleItemBuffer;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -24,22 +28,30 @@ import static rx.Observable.just;
  * alexander.shustanov on 15.12.16
  */
 public class MapTileProviderArray extends MapTileProviderBase {
-    private final TileCache tileCache = new TileCache(40);
+    private final TileCache tileCache;
     private final TileLoader loader;
 
-    private final PublishSubject<MapTileState> updates = PublishSubject.create();
+    private final PublishSubject<MapTileState> loadedTiles = PublishSubject.create();
 
     public MapTileProviderArray(List<MapTileProviderModule> modules) {
-        loader = new TileLoader(modules, updates);
+        DisplayMetrics displayMetrics = Resources.getSystem().getDisplayMetrics();
+        int heightPixels = displayMetrics.heightPixels;
+        int widthPixels = displayMetrics.widthPixels;
+        int tileSize = TileSystem.getTileSize();
+
+        int cacheSize = (int) ((heightPixels/tileSize)*(widthPixels/tileSize)*1.5);
+
+        tileCache = new TileCache(cacheSize);
+        loader = new TileLoader(modules, loadedTiles);
     }
 
     @Override
-    protected Observable<MapTileBatch> processTiles(Observable<Pair<Projection, Collection<MapTile>>> listObservable) {
+    protected Observable<MapTileBatch> processTiles(Observable<Pair<Projection, Collection<MapTile>>> projectionWithTiles) {
         Observable<?> updateCache =
-                updates
+                loadedTiles
                         .buffer(100, TimeUnit.MILLISECONDS, 10)
                         .filter(list -> !list.isEmpty())
-                        .onBackpressureBuffer(1, null, () -> true)
+                        .compose(SingleItemBuffer.dropOldest())
                         .observeOn(MapSchedulers.tilesScheduler())
                         .doOnNext(mapTileStates -> {
                             for (MapTileState mapTileState : mapTileStates) {
@@ -47,12 +59,13 @@ public class MapTileProviderArray extends MapTileProviderBase {
                             }
                         });
 
+        projectionWithTiles = projectionWithTiles
+                .observeOn(MapSchedulers.tilesScheduler());
         return
                 combineLatest(
                         concat(just(null), updateCache),
-                        listObservable,
+                        projectionWithTiles,
                         (aVoid, projectionListPair) -> projectionListPair)
-                        .observeOn(MapSchedulers.tilesScheduler())
                         .map(projectionListPair -> {
                             Projection projection = projectionListPair.first;
                             Collection<MapTile> mapTiles = projectionListPair.second;
@@ -73,7 +86,7 @@ public class MapTileProviderArray extends MapTileProviderBase {
     protected void detach() {
         super.detach();
         loader.detach();
-        updates.onCompleted();
+        loadedTiles.onCompleted();
         tileCache.detach();
     }
 }
