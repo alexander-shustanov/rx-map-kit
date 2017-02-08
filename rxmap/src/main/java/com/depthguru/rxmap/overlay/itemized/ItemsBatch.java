@@ -6,6 +6,7 @@ import android.graphics.drawable.Drawable;
 import com.depthguru.rxmap.Projection;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,14 +28,9 @@ public class ItemsBatch<T, D> {
     private final List<ItemWithPixelCoordinates<T, D>> itemWithPixelCoordinates;
     private final Projection projection;
     private final Map<T, Drawable> icons;
+    private final List<T> requiredIcons;
 
-    public ItemsBatch(List<ItemWithPixelCoordinates<T, D>> itemWithPixelCoordinates, Projection projection, Map<T, Drawable> icons) {
-        this.itemWithPixelCoordinates = itemWithPixelCoordinates;
-        this.projection = projection;
-        this.icons = icons;
-    }
-
-    public ItemsBatch(List<Item<T, D>> items, Projection projection) {
+    ItemsBatch(List<Item<T, D>> items, Projection projection) {
         this.projection = projection;
         icons = new HashMap<>();
         itemWithPixelCoordinates = new ArrayList<>();
@@ -43,6 +39,17 @@ public class ItemsBatch<T, D> {
             projection.toPixels(item.getCoordinate(), point);
             itemWithPixelCoordinates.add(new ItemWithPixelCoordinates<>(point.x, point.y, item.getType(), item.getData()));
         }
+        requiredIcons = new ArrayList<T>();
+        for (Item<T, D> item : items) {
+            requiredIcons.add(item.getType());
+        }
+    }
+
+    public ItemsBatch(List<ItemWithPixelCoordinates<T, D>> itemWithPixelCoordinates, Projection projection, Map<T, Drawable> icons) {
+        this.itemWithPixelCoordinates = itemWithPixelCoordinates;
+        this.projection = projection;
+        this.icons = icons;
+        requiredIcons = Collections.emptyList();
     }
 
     public Drawable getIcon(T t) {
@@ -55,6 +62,14 @@ public class ItemsBatch<T, D> {
 
     public List<ItemWithPixelCoordinates<T, D>> getItemWithPixelCoordinates() {
         return new ArrayList<>(itemWithPixelCoordinates);
+    }
+
+    public List<T> getRequiredIcons() {
+        return requiredIcons;
+    }
+
+    public ItemsBatch<T, D> extendWithIcons(Map<T, Drawable> icons) {
+        return new ItemsBatch<T, D>(itemWithPixelCoordinates, projection, icons);
     }
 
     public static class ItemWithPixelCoordinates<T, D> {

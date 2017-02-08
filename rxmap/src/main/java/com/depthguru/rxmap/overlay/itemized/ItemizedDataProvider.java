@@ -32,7 +32,7 @@ public abstract class ItemizedDataProvider<T, D> extends OverlayDataProvider<Ite
         Observable<Projection> distinctProjection = //Projections with different zooms and far away from each other
                 projectionObservable.lift(DistinctProjections.get());
 
-        Observable<Observable<ItemsBatch<T, D>>> batches =
+        Observable<Observable<ItemsBatch<T, D>>> batchesObservables =
                 distinctProjection
                         .map(Projection::getBounds)
                         .map(this::expandBounds) //Expand bounds to receive data for bigger area
@@ -44,10 +44,13 @@ public abstract class ItemizedDataProvider<T, D> extends OverlayDataProvider<Ite
                                             accumulator.addAll(newValue);
                                             return accumulator;
                                         }).map(items -> new ItemsBatch<>(items, projection))
-                        );
+                        )
+                        .map(batchObservable ->
+                                batchObservable.flatMap(batch ->
+                                        iconProvider.fetchIcons(batch.getRequiredIcons()).map(batch::extendWithIcons)
+                                ));
 
-        return switchOnNext(batches) //Receive updates about icons until new projection has been received
-                .flatMap(iconProvider::fetchIcons);
+        return switchOnNext(batchesObservables); //Receive updates about icons until new projection has been received
 
     }
 
@@ -65,7 +68,8 @@ public abstract class ItemizedDataProvider<T, D> extends OverlayDataProvider<Ite
 
     /**
      * Creates observable of @code{List<Item<T, D>>} items to show on map.
-     * All items emitted by it will be shown for concrete projection.
+     * All items  emitted by it will be shown for concrete projection.
+     *
      * @param boundingBoxE6
      * @return
      */

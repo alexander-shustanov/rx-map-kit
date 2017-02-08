@@ -1,5 +1,10 @@
 package com.depthguru.rxmap.overlay.itemized;
 
+import android.graphics.drawable.Drawable;
+
+import java.util.List;
+import java.util.Map;
+
 import rx.Observable;
 
 /**
@@ -9,5 +14,5 @@ import rx.Observable;
  */
 
 public abstract class IconProvider<T> {
-    protected abstract <D> Observable<ItemsBatch<T, D>> fetchIcons(ItemsBatch<T, D> batchWithoutIcons);
+    protected abstract Observable<Map<T, Drawable>> fetchIcons(List<T> types);
 }

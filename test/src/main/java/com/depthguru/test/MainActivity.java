@@ -12,12 +12,11 @@ import com.depthguru.rxmap.overlay.itemized.IconProvider;
 import com.depthguru.rxmap.overlay.itemized.Item;
 import com.depthguru.rxmap.overlay.itemized.ItemizedDataProvider;
 import com.depthguru.rxmap.overlay.itemized.ItemizedOverlay;
-import com.depthguru.rxmap.overlay.itemized.ItemsBatch;
 import com.depthguru.rxmap.overlay.itemized.PlainItem;
 import com.depthguru.rxmap.overlay.tiles.TileOverlay;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -31,19 +30,8 @@ public class MainActivity extends Activity {
 
     private IconProvider<String> iconProvider = new IconProvider<String>() {
         @Override
-        protected <D> Observable<ItemsBatch<String, D>> fetchIcons(ItemsBatch<String, D> batchWithoutIcons) {
-            Map<String, Drawable> icons = new HashMap<>();
-            for (ItemsBatch.ItemWithPixelCoordinates<String, D> itemWithPixelCoordinates : batchWithoutIcons.getItemWithPixelCoordinates()) {
-                if (icons.containsKey(itemWithPixelCoordinates.getItemType())) {
-                    continue;
-                } else {
-                    if (drawable == null) {
-                        drawable = getResources().getDrawable(R.mipmap.ic_launcher);
-                    }
-                    icons.put(itemWithPixelCoordinates.getItemType(), drawable);
-                }
-            }
-            return just(new ItemsBatch<>(batchWithoutIcons.getItemWithPixelCoordinates(), batchWithoutIcons.getProjection(), icons));
+        protected Observable<Map<String, Drawable>> fetchIcons(List<String> types) {
+            return just(Collections.singletonMap("1", drawable));
         }
     };
 
@@ -60,7 +48,7 @@ public class MainActivity extends Activity {
         protected Observable<List<Item<String, Void>>> fetchByBounds(BoundingBoxE6 boundingBoxE6) {
             return Observable.<Item<String, Void>>create(subscriber -> {
                 for (PlainItem<String> item : this.items) {
-                    if(boundingBoxE6.contains(item.getCoordinate())) {
+                    if (boundingBoxE6.contains(item.getCoordinate())) {
                         subscriber.onNext(item);
                     }
                 }
@@ -72,6 +60,8 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        drawable = getResources().getDrawable(R.mipmap.ic_launcher);
 
         RxMapView mapView = new RxMapView(this);
         OverlayManager overlayManager = mapView.getOverlayManager();
