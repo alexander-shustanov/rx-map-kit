@@ -48,4 +48,13 @@ public class MapTile {
         result = 31 * result + zoomLevel;
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "MapTile{" +
+                "x=" + x +
+                ", y=" + y +
+                ", zoomLevel=" + zoomLevel +
+                '}';
+    }
 }

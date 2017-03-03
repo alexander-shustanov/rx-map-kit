@@ -10,9 +10,12 @@ import com.depthguru.rxmap.TileSystem;
 import com.depthguru.rxmap.rx.MapSchedulers;
 import com.depthguru.rxmap.rx.SingleItemBuffer;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import rx.Observable;
@@ -28,8 +31,12 @@ import static rx.Observable.just;
  * alexander.shustanov on 15.12.16
  */
 public class MapTileProviderArray extends MapTileProviderBase {
+    private final int cacheSize;
+
     private final TileCache tileCache;
     private final TileLoader loader;
+
+    private final Set<MapTile> inLoading = new HashSet<>();
 
     private final PublishSubject<MapTileState> loadedTiles = PublishSubject.create();
 
@@ -39,7 +46,7 @@ public class MapTileProviderArray extends MapTileProviderBase {
         int widthPixels = displayMetrics.widthPixels;
         int tileSize = TileSystem.getTileSize();
 
-        int cacheSize = (int) ((heightPixels/tileSize)*(widthPixels/tileSize)*1.5);
+        cacheSize = (int) ((heightPixels/tileSize + 2)*(widthPixels/tileSize + 2)*1.5);
 
         tileCache = new TileCache(cacheSize);
         loader = new TileLoader(modules, loadedTiles);
@@ -51,11 +58,12 @@ public class MapTileProviderArray extends MapTileProviderBase {
                 loadedTiles
                         .buffer(100, TimeUnit.MILLISECONDS, 10)
                         .filter(list -> !list.isEmpty())
-                        .compose(SingleItemBuffer.dropOldest())
+                        .onBackpressureBuffer()
                         .observeOn(MapSchedulers.tilesScheduler())
                         .doOnNext(mapTileStates -> {
                             for (MapTileState mapTileState : mapTileStates) {
                                 tileCache.put(mapTileState.getMapTile(), mapTileState.getDrawable());
+                                inLoading.remove(mapTileState.getMapTile());
                             }
                         });
 
@@ -75,7 +83,9 @@ public class MapTileProviderArray extends MapTileProviderBase {
                                 if (drawable != null) {
                                     tiles.put(mapTile, drawable);
                                 } else {
-                                    loader.schedule(new MapTileState(mapTile));
+                                    if(!inLoading.contains(mapTile) && loader.schedule(new MapTileState(mapTile))) {
+                                        inLoading.add(mapTile);
+                                    }
                                 }
                             }
                             return new MapTileBatch(tiles, mapTiles, projection);

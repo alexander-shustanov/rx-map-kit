@@ -15,6 +15,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import rx.Observer;
 import rx.subjects.PublishSubject;
 
 /**
@@ -38,44 +39,46 @@ public class MapnikProviderModule extends MapTileProviderModule {
     }
 
     @Override
-    public Runnable process(MapTileState mapTileState, PublishSubject<MapTileState> loadSorter) {
-        return () -> {
-            MapTile mapTile = mapTileState.getMapTile();
-            URL url = null;
-            try {
-                url = new URL(String.format("http://a.tile.openstreetmap.org/%s/%s/%s.png", mapTile.getZoomLevel(), mapTile.getX(), mapTile.getY()));
-                HttpURLConnection connection = null;
+    public LoadTask createTask(MapTileState mapTileState, Observer<MapTileState> loadSorter) {
+        return new LoadTask() {
+            @Override
+            protected void load() {
+                MapTile mapTile = mapTileState.getMapTile();
+                URL url = null;
                 try {
-                    connection = (HttpURLConnection) url.openConnection();
-                    connection.setDoInput(true);
-                    connection.connect();
-                    InputStream input = connection.getInputStream();
-                    Bitmap bitmap = BitmapFactory.decodeStream(input, null, opts);
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                        bitmap.setHasMipMap(true);
-                    }
-                    BitmapDrawable drawable = new BitmapDrawable(context.getResources(), bitmap);
+                    url = new URL(String.format("http://a.tile.openstreetmap.org/%s/%s/%s.png", mapTile.getZoomLevel(), mapTile.getX(), mapTile.getY()));
+                    HttpURLConnection connection = null;
+                    try {
+                        connection = (HttpURLConnection) url.openConnection();
+                        connection.setDoInput(true);
+                        connection.connect();
+                        InputStream input = connection.getInputStream();
+                        Bitmap bitmap = BitmapFactory.decodeStream(input, null, opts);
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                            bitmap.setHasMipMap(true);
+                        }
+                        BitmapDrawable drawable = new BitmapDrawable(context.getResources(), bitmap);
 
-                    File file = new File(context.getCacheDir(), String.format("%s/%s/%s.png", mapTile.getZoomLevel(), mapTile.getX(), mapTile.getY()));
-                    if(!file.getParentFile().exists()) {
-                        file.getParentFile().mkdirs();
-                    }
+                        File file = new File(context.getCacheDir(), String.format("%s/%s/%s.png", mapTile.getZoomLevel(), mapTile.getX(), mapTile.getY()));
+                        if(!file.getParentFile().exists()) {
+                            file.getParentFile().mkdirs();
+                        }
 
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, new FileOutputStream(file));
+                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, new FileOutputStream(file));
 
-                    mapTileState.setDrawable(drawable);
-                } catch (IOException e) {
-                    mapTileState.incState();
-                } finally {
-                    if(connection != null) {
-                        connection.disconnect();
+                        mapTileState.setDrawable(drawable);
+                    } catch (IOException e) {
+                        mapTileState.incState();
+                    } finally {
+                        if(connection != null) {
+                            connection.disconnect();
+                        }
                     }
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
                 }
                 loadSorter.onNext(mapTileState);
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
             }
-
         };
     }
 }

@@ -35,4 +35,8 @@ public class MapTileState {
     public void incState() {
         state++;
     }
+
+    public void skip() {
+        state = Integer.MAX_VALUE;
+    }
 }

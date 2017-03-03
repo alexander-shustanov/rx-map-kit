@@ -53,6 +53,10 @@ public class MapTileBatch {
         return mapTiles;
     }
 
+    public Map<MapTile, Drawable> getTiles() {
+        return tiles;
+    }
+
     public Drawable getTile(MapTile mapTile) {
         return tiles.get(mapTile);
     }

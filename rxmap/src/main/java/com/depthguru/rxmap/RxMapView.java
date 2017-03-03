@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.graphics.Rect;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
 
@@ -67,14 +68,12 @@ public class RxMapView extends ViewGroup {
 
             if (zoomDiff != 0) {
                 scroller.reconfigureWithZoomFactor(zoomDiff, pivot, TileSystem.getTileSize() << endZoom);
-                scrollTo(scroller.getCurrX(), scroller.getCurrY());
-                computeProjection();
             } else {
-                scrollTo(scroller.getCurrX(), scroller.getCurrY());
-                computeProjection();
                 postInvalidate();
             }
+            scrollTo(scroller.getCurrX(), scroller.getCurrY());
         }
+        computeProjection();
     }
 
     private void updatePivot(float pivotX, float pivotY) {
@@ -86,7 +85,7 @@ public class RxMapView extends ViewGroup {
         float dy = (pivotY - pivot.y) * (1f - 1f / scaleFactor);
         scroller.offsetBy(-dx, -dy);
         pivot.set(pivotX, pivotY);
-        computeProjection();
+//        computeProjection();
         invalidate();
     }
 
@@ -157,7 +156,7 @@ public class RxMapView extends ViewGroup {
 
     public void setTilesScaledToDpi(boolean tilesScaledToDpi) {
         if (tilesScaledToDpi) {
-            float density = Math.max(getResources().getDisplayMetrics().density / 1.5f, 1f);
+            float density = Math.max(getResources().getDisplayMetrics().density, 1f);
             TileSystem.setScaledToDensity(density);
         } else {
             TileSystem.restoreTileSize();

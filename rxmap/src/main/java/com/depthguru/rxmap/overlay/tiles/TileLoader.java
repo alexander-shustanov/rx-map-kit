@@ -2,7 +2,6 @@ package com.depthguru.rxmap.overlay.tiles;
 
 import com.depthguru.rxmap.rx.MapSchedulers;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -26,36 +25,38 @@ public class TileLoader extends Thread {
     private final PublishSubject<MapTileState> loadResultConveyor = PublishSubject.create();
     private final List<MapTileProviderModule> modules;
     private final ExecutorService executor;
+    private final LinkedBlockingQueue<Runnable> workQueue;
+    private final Object monitor = new Object();
 
     private boolean inProcess = true;
 
     /**
-     * @param modules List of modules sorted by priority
+     * @param modules               List of modules sorted by priority
      * @param successLoadedObserver observer observing success loadede tiles
      */
     public TileLoader(List<MapTileProviderModule> modules, Observer<MapTileState> successLoadedObserver) {
         this.modules = modules;
-        executor = new ThreadPoolExecutor(2, 2, 5, TimeUnit.SECONDS, new LinkedBlockingQueue<>(20));
+        workQueue = new LinkedBlockingQueue<>(4);
+        executor = new ThreadPoolExecutor(2, 2, 5, TimeUnit.SECONDS, workQueue);
 
         Subscription subscription = loadResultConveyor
-                .filter(mapTileState -> mapTileState.getDrawable() != null)
-                .doOnNext(mapTileState -> {
-                    Iterator<MapTileState> iterator = queue.iterator();
-                    while (iterator.hasNext()) {
-                        MapTileState next = iterator.next();
-                        if(next.getMapTile().equals(mapTileState.getMapTile())) {
-                            iterator.remove();
-                        }
-                    }
-                })
+                .filter(mapTileState -> mapTileState.getDrawable() != null || modules.size() <= mapTileState.getState())
                 .subscribe(successLoadedObserver);
         this.subscription.add(subscription);
 
         subscription = loadResultConveyor
-                .filter(mapTileState -> mapTileState.getDrawable() == null)
-                .onBackpressureLatest()
+                .filter(mapTileState -> mapTileState.getDrawable() == null && modules.size() > mapTileState.getState())
+                .onBackpressureDrop(mapTileState -> {
+                    mapTileState.incState();
+                    loadResultConveyor.onNext(mapTileState);
+                })
                 .observeOn(MapSchedulers.tilesScheduler())
-                .subscribe(this::schedule);
+                .subscribe(mapTileState -> {
+                    if (!schedule(mapTileState)) {
+                        mapTileState.skip();
+                        loadResultConveyor.onNext(mapTileState);
+                    }
+                });
         this.subscription.add(subscription);
 
         start();
@@ -63,10 +64,11 @@ public class TileLoader extends Thread {
 
     /**
      * Schedules tile loading
+     *
      * @param mapTileState
      */
-    public void schedule(MapTileState mapTileState) {
-        queue.offer(mapTileState);
+    public boolean schedule(MapTileState mapTileState) {
+        return queue.offer(mapTileState);
     }
 
     @Override
@@ -74,18 +76,31 @@ public class TileLoader extends Thread {
         while (inProcess) {
             MapTileState mapTileState;
             try {
+                while (queue.size() > 4) {
+                    mapTileState = queue.take();
+                    mapTileState.skip();
+                    loadResultConveyor.onNext(mapTileState);
+                }
                 mapTileState = queue.take();
+
             } catch (InterruptedException e) {
                 return;
+            }
+
+            synchronized (monitor) {
+                while (workQueue.remainingCapacity() == 0) {
+                    try {
+                        monitor.wait();
+                    } catch (InterruptedException e) {
+                        return;
+                    }
+                }
             }
 
             int state = mapTileState.getState();
             if (modules.size() > state) {
                 MapTileProviderModule module = modules.get(state);
-                try {
-                    executor.submit(module.process(mapTileState, loadResultConveyor));
-                } catch (Exception e) {
-                }
+                executor.submit(module.process(mapTileState, loadResultConveyor, monitor));
             }
         }
     }

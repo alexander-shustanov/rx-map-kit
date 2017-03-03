@@ -6,16 +6,16 @@ import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 
-import com.depthguru.rxmap.MathUtils;
 import com.depthguru.rxmap.Projection;
 import com.depthguru.rxmap.TileSystem;
 import com.depthguru.rxmap.overlay.Drawer;
 import com.depthguru.rxmap.overlay.Overlay;
 import com.depthguru.rxmap.rx.MapSchedulers;
-import com.depthguru.rxmap.rx.ProcessWithLast;
 import com.depthguru.rxmap.rx.SingleItemBuffer;
+import com.depthguru.rxmap.rx.StateMonad;
 
 import java.util.Arrays;
+import java.util.Map;
 
 import rx.Observable;
 
@@ -40,7 +40,7 @@ public class TileOverlay extends Overlay<MapTileBatch> {
                 .postProcessData(dataObservable)
                 .compose(SingleItemBuffer.dropOldest())
                 .observeOn(MapSchedulers.tilesBatchAssembleScheduler())
-                .lift(ProcessWithLast.of(MapTileBatch::completeWith));
+                .lift(StateMonad.create(MapTileBatch::completeWith));
     }
 
     @Override
@@ -77,13 +77,13 @@ public class TileOverlay extends Overlay<MapTileBatch> {
 
             canvas.save();
 
-
-            for (MapTile tile : mapTileBatch.getMapTiles()) {
-                Drawable drawable = mapTileBatch.getTile(tile);
+            for (Map.Entry<MapTile, Drawable> entry : mapTileBatch.getTiles().entrySet()) {
+                Drawable drawable = entry.getValue();
                 if (drawable == null) {
                     continue;
                 }
-                float tileSize = TileSystem.getTileSize();
+                MapTile tile = entry.getKey();
+                double tileSize = TileSystem.getTileSize();
 
                 int zoomDelta = projection.getDiscreteZoom() - tile.getZoomLevel();
                 if (zoomDelta >= 0) {
@@ -97,7 +97,7 @@ public class TileOverlay extends Overlay<MapTileBatch> {
                         int x = (int) (tile.getX() * tileSize + worldSize * i + startX);
                         int y = (int) (tile.getY() * tileSize + worldSize * j + startY);
 
-                        if (!canvas.quickReject(x, y, x + tileSize, y + tileSize, Canvas.EdgeType.BW)) {
+                        if (!canvas.quickReject(x, y, ((int) (x + tileSize)), ((int) (y + tileSize)), Canvas.EdgeType.BW)) {
                             drawable.setBounds(x, y, x + ((int) tileSize), (int) (y + tileSize));
                             drawable.draw(canvas);
                         }
