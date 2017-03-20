@@ -1,6 +1,7 @@
 package com.depthguru.rxmap.touch;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.PointF;
 import android.os.Handler;
 import android.os.Looper;
@@ -17,6 +18,7 @@ public abstract class TouchScroller {
     private final Handler handler = new Handler(Looper.getMainLooper());
 
     private final float touchSlop;
+    private final float flingVelocitySlop;
 
     private final PointF reuse = new PointF();
 
@@ -27,8 +29,10 @@ public abstract class TouchScroller {
     private PointF tapToken;
 
     protected TouchScroller(Context context) {
-        touchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
-        state = new TouchState(touchSlop);
+        ViewConfiguration viewConfiguration = ViewConfiguration.get(context);
+        flingVelocitySlop = viewConfiguration.getScaledMinimumFlingVelocity() * Resources.getSystem().getDisplayMetrics().density / 1000f;
+        touchSlop = viewConfiguration.getScaledTouchSlop();
+        state = new TouchState(touchSlop, flingVelocitySlop);
         rejectTap = state::rejectTap;
     }
 
@@ -81,7 +85,9 @@ public abstract class TouchScroller {
             }
         } else if (state.canPerformFling()) {
             state.computeVelocity(reuse);
-            onFling(reuse.x, reuse.y);
+            if (state.doFling()) {
+                onFling(reuse.x, reuse.y);
+            }
         }
         handler.removeCallbacks(detectLongPress);
         handler.removeCallbacks(rejectTap);

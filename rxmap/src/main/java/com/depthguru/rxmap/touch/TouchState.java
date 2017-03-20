@@ -17,11 +17,13 @@ public class TouchState {
     private final PointF initialPosition = new PointF();
     private final PointF scrollPosition = new PointF();
     private final float touchSlop;
+    private final float flingVelocitySlop;
     private float fingersDistance;
     private State state = State.NONE;
 
-    public TouchState(float touchSlop) {
+    public TouchState(float touchSlop, float flingVelocitySlop) {
         this.touchSlop = touchSlop;
+        this.flingVelocitySlop = flingVelocitySlop;
     }
 
     public boolean canPerformTap() {
@@ -119,6 +121,14 @@ public class TouchState {
     public void computeVelocity(PointF reuse) {
         velocityTracker.computeCurrentVelocity(1);
         reuse.set(velocityTracker.getXVelocity(), velocityTracker.getYVelocity());
+    }
+
+    public boolean doFling() {
+        float velocity = (float) Math.sqrt(
+                velocityTracker.getXVelocity() * velocityTracker.getXVelocity()
+                        + velocityTracker.getYVelocity() * velocityTracker.getYVelocity()
+        );
+        return velocity >= flingVelocitySlop;
     }
 
     public void detach() {

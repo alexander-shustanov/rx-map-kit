@@ -11,7 +11,7 @@ import android.view.animation.LinearInterpolator;
  * alexander.shustanov on 24.01.17.
  */
 
-public class Axis {
+class Axis {
     private static final Interpolator LINEAR = new LinearInterpolator();
     private static final Interpolator DECELERATE = new DecelerateInterpolator();
 
@@ -31,7 +31,7 @@ public class Axis {
     private double left;
     private double right;
 
-    public Axis(float initialPosition) {
+    Axis(float initialPosition) {
 
         startPosition = initialPosition;
         currentPosition = initialPosition;
@@ -40,11 +40,11 @@ public class Axis {
         resetClamp();
     }
 
-    public void scrollBy(float delta) {
+    void scrollBy(float delta) {
         scrollBy(delta, 20);
     }
 
-    public void scrollBy(float delta, int duration) {
+    void scrollBy(float delta, int duration) {
         fixPosition();
         interpolator = LINEAR;
         this.duration = duration;
@@ -59,7 +59,7 @@ public class Axis {
         startPosition = currentPosition;
     }
 
-    public void computeCurrentValue() {
+    void computeCurrentValue() {
         if (currentPosition == endPosition) {
             return;
         }
@@ -78,7 +78,7 @@ public class Axis {
         }
     }
 
-    public float getNormalTime() {
+    private float getNormalTime() {
         long now = AnimationUtils.currentAnimationTimeMillis();
         long delta = now - startTime;
         if (delta >= duration) {
@@ -87,7 +87,7 @@ public class Axis {
         return interpolator.getInterpolation(((float) delta) / ((float) duration));
     }
 
-    public boolean isEnd() {
+    boolean isEnd() {
         if (interrupted) {
             interrupted = false;
             return false;
@@ -95,7 +95,11 @@ public class Axis {
         return currentPosition == endPosition;
     }
 
-    public void fling(float velocity, int duration, float tension) {
+    boolean isFlinging() {
+        return velocity != 0;
+    }
+
+    void fling(float velocity, int duration, float tension) {
         fixPosition();
         endPosition = clamp(startPosition - velocity * duration / 2f);
         this.velocity = velocity;
@@ -104,14 +108,14 @@ public class Axis {
         interpolator = LINEAR;
     }
 
-    public void offsetBy(float offset) {
+    void offsetBy(float offset) {
         startPosition = clamp(startPosition + offset);
         endPosition = clamp(endPosition + offset);
         currentPosition = clamp(currentPosition + offset);
         interrupted = true;
     }
 
-    public void reconfigureWithZoomFactor(float scaleFactor, float pivot, int worldSize) {
+    void reconfigureWithZoomFactor(float scaleFactor, float pivot, int worldSize) {
         this.startPosition += pivot;
         this.endPosition += pivot;
         this.currentPosition += pivot;
@@ -135,22 +139,22 @@ public class Axis {
         this.tension *= scaleFactor;
     }
 
-    public void stopScroll() {
+    void stopScroll() {
         fixPosition();
         duration = 0;
         endPosition = startPosition;
     }
 
-    public double getCurrentPosition() {
+    double getCurrentPosition() {
         return currentPosition;
     }
 
-    public void clamp(double left, double right) {
+    void clamp(double left, double right) {
         this.left = left;
         this.right = right;
     }
 
-    public void resetClamp() {
+    private void resetClamp() {
         this.left = -Double.MAX_VALUE;
         this.right = Double.MAX_VALUE;
     }
@@ -165,7 +169,7 @@ public class Axis {
         return value;
     }
 
-    public void setPosition(float pos) {
+    void setPosition(float pos) {
         tension = 0.0;
         velocity = 0.0;
         startTime = AnimationUtils.currentAnimationTimeMillis();

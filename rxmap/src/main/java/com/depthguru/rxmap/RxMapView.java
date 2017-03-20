@@ -5,15 +5,19 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.graphics.Rect;
-import android.util.Log;
+import android.support.annotation.Px;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
 
+import com.depthguru.rxmap.event.FlingEvent;
+import com.depthguru.rxmap.event.ScrollEvent;
 import com.depthguru.rxmap.overlay.OverlayManager;
 import com.depthguru.rxmap.touch.Scroller;
 import com.depthguru.rxmap.touch.TouchScroller;
 import com.depthguru.rxmap.touch.Zoom;
 
+import rx.Observable;
+import rx.subjects.BehaviorSubject;
 import rx.subjects.PublishSubject;
 
 /**
@@ -31,6 +35,11 @@ public class RxMapView extends ViewGroup {
     private final TouchScroller touchScroller;
     private final OverlayManager overlayManager;
 
+    private final BehaviorSubject<ScrollEvent> scrollEventObservable = BehaviorSubject.create();
+    private final BehaviorSubject<FlingEvent> flingEventObservable = BehaviorSubject.create();
+    private final BehaviorSubject<Void> flingEndEventObservable = BehaviorSubject.create();
+    private final BehaviorSubject<Integer> onZoomEventObservable = BehaviorSubject.create();
+
     private Projection projection;
 
     public RxMapView(Context context) {
@@ -42,6 +51,22 @@ public class RxMapView extends ViewGroup {
         scroller = new Scroller(1000, 500);
     }
 
+    public Observable<ScrollEvent> getScrollEventObservable() {
+        return scrollEventObservable;
+    }
+
+    public Observable<FlingEvent> getFlingEventObservable() {
+        return flingEventObservable;
+    }
+
+    public Observable<Void> getFlingEndEventObservable() {
+        return flingEndEventObservable;
+    }
+
+    public Observable<Integer> getOnZoomEventObservable() {
+        return onZoomEventObservable;
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         return touchScroller.onTouchEvent(event);
@@ -50,6 +75,7 @@ public class RxMapView extends ViewGroup {
     @Override
     public void computeScroll() {
         int startZoom = zoom.getDiscreteZoom();
+        boolean isFlinging = scroller.isFlinging();
         if (scroller.computeScrollOffset() || zoom.computeZoomOffset()) {
             int endZoom = zoom.getDiscreteZoom();
             int zoomDiff = endZoom - startZoom;
@@ -72,8 +98,12 @@ public class RxMapView extends ViewGroup {
                 postInvalidate();
             }
             scrollTo(scroller.getCurrX(), scroller.getCurrY());
+            computeProjection();
         }
-        computeProjection();
+
+        if (isFlinging && !scroller.isFlinging()) {
+            flingEndEventObservable.onNext(null);
+        }
     }
 
     private void updatePivot(float pivotX, float pivotY) {
@@ -85,7 +115,6 @@ public class RxMapView extends ViewGroup {
         float dy = (pivotY - pivot.y) * (1f - 1f / scaleFactor);
         scroller.offsetBy(-dx, -dy);
         pivot.set(pivotX, pivotY);
-//        computeProjection();
         invalidate();
     }
 
@@ -135,16 +164,6 @@ public class RxMapView extends ViewGroup {
         return new Rect(0, 0, getWidth(), getHeight());
     }
 
-    private void onZoom(float zoom, PointF pivot) {
-        int zoomDiff = this.zoom.add(zoom);
-        int endZoom = this.zoom.getDiscreteZoom();
-        updatePivot(pivot.x, pivot.y);
-
-        if (zoomDiff != 0) {
-            scroller.reconfigureWithZoomFactor(zoomDiff, pivot, TileSystem.getTileSize() << endZoom);
-        }
-    }
-
 
     @Override
     protected void onDetachedFromWindow() {
@@ -163,6 +182,12 @@ public class RxMapView extends ViewGroup {
         }
     }
 
+    @Override
+    public void scrollTo(@Px int x, @Px int y) {
+        super.scrollTo(x, y);
+        scrollEventObservable.onNext(new ScrollEvent(x, y));
+    }
+
     private class MapTouchScroller extends TouchScroller {
 
         private MapTouchScroller(Context context) {
@@ -179,12 +204,20 @@ public class RxMapView extends ViewGroup {
         @Override
         protected void onFling(float xVelocity, float yVelocity) {
             scroller.fling(xVelocity, yVelocity);
+            flingEventObservable.onNext(new FlingEvent(xVelocity, yVelocity));
             invalidate();
         }
 
         @Override
         protected void onZoom(float zoom, PointF pivot) {
-            RxMapView.this.onZoom(zoom, pivot);
+            int zoomDiff = RxMapView.this.zoom.add(zoom);
+            int endZoom = RxMapView.this.zoom.getDiscreteZoom();
+            updatePivot(pivot.x, pivot.y);
+
+            if (zoomDiff != 0) {
+                scroller.reconfigureWithZoomFactor(zoomDiff, pivot, TileSystem.getTileSize() << endZoom);
+                onZoomEventObservable.onNext(endZoom);
+            }
         }
 
         @Override

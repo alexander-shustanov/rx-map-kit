@@ -3,6 +3,7 @@ package com.depthguru.test;
 import android.app.Activity;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.depthguru.rxmap.BoundingBoxE6;
 import com.depthguru.rxmap.GeoPoint;
@@ -20,12 +21,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import rx.Observable;
 
 import static rx.Observable.just;
 
 public class MainActivity extends Activity {
+
+    private static final String TAG = "MainActivity.TAG";
 
     private Drawable drawable = null;
 
@@ -73,5 +77,10 @@ public class MainActivity extends Activity {
         mapView.setTilesScaledToDpi(true);
 
         setContentView(mapView);
+
+        mapView.getScrollEventObservable().debounce(200, TimeUnit.MILLISECONDS).subscribe(scrollEvent -> Log.d(TAG, "scrollEvent : " + scrollEvent));
+        mapView.getFlingEventObservable().subscribe(flingEvent -> Log.d(TAG, "flingEvent : " + flingEvent));
+        mapView.getFlingEndEventObservable().subscribe(flingEndEvent -> Log.d(TAG, "flingEndEvent : " + flingEndEvent));
+        mapView.getOnZoomEventObservable().subscribe(zoom -> Log.d(TAG, "onZoomEvent : " + zoom));
     }
 }

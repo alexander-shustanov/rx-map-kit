@@ -23,6 +23,10 @@ public class Scroller {
         y.scrollBy(dy);
     }
 
+    public boolean isFlinging() {
+        return x.isFlinging() || y.isFlinging();
+    }
+
     public void fling(float xVelocity, float yVelocity) {
         if (xVelocity == 0 && yVelocity == 0) {
             return;
