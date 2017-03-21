@@ -22,6 +22,7 @@ public class Projection {
     private final float pivotY;
 
     private final Matrix scaleMatrix = new Matrix();
+    private final Matrix unScaleMatrix = new Matrix();
 
     private final float zoom;
     private final int discreteZoom;
@@ -48,10 +49,19 @@ public class Projection {
         pivotY = mapView.pivot.y;
 
         scaleMatrix.set(mapView.scaleMatrix);
+        scaleMatrix.invert(unScaleMatrix);
 
         screenRect = mapView.getScreenRect();
 
         boundingBoxE6 = new BoundingBoxE6(fromPixels(screenRect.left, screenRect.top), fromPixels(screenRect.right, screenRect.bottom));
+    }
+
+    public Matrix getScaleMatrix() {
+        return scaleMatrix;
+    }
+
+    public Matrix getUnScaleMatrix() {
+        return unScaleMatrix;
     }
 
     public Point toPixels(GeoPoint geoPoint, Point reuse) {
@@ -99,6 +109,10 @@ public class Projection {
 
     public int getDiscreteZoom() {
         return (int) Math.floor(zoom);
+    }
+
+    public float getZoom() {
+        return zoom;
     }
 
     public BoundingBoxE6 getBounds() {

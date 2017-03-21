@@ -119,6 +119,11 @@ public class RxMapView extends ViewGroup {
     }
 
     private void computeProjection() {
+        scaleMatrix.reset();
+
+        float scale = zoom.getScaleFactor();
+        scaleMatrix.preScale(scale, scale, pivot.x, pivot.y);
+
         projection = new Projection(this);
         projectionSubject.onNext(projection);
     }
@@ -132,10 +137,7 @@ public class RxMapView extends ViewGroup {
     protected void dispatchDraw(Canvas canvas) {
         canvas.save();
         canvas.translate(getScrollX(), getScrollY());
-        scaleMatrix.reset();
 
-        float scale = zoom.getScaleFactor();
-        scaleMatrix.preScale(scale, scale, projection.getPivotX(), projection.getPivotY());
         canvas.concat(scaleMatrix);
 
         overlayManager.draw(canvas, projection);

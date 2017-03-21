@@ -1,12 +1,9 @@
 package com.depthguru.rxmap.overlay;
 
-import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 
 import com.depthguru.rxmap.Projection;
-
-import rx.Observable;
 
 /**
  * BackgroundOverlay
@@ -23,11 +20,6 @@ public class BackgroundOverlay extends SimpleOverlay {
         backgroundPaint.setColor(0xffd1d1d1);
 
         linesPaint.setColor(0xff9b987d);
-    }
-
-    @Override
-    protected Observable<Projection> setupProjectionSubscribe(Observable<Projection> projectionObservable) {
-        return projectionObservable.first();
     }
 
     @Override

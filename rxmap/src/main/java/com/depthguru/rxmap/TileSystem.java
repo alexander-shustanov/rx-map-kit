@@ -155,8 +155,12 @@ public final class TileSystem {
 		final GeoPoint out = (reuse == null ? new GeoPoint(0, 0) : reuse);
 
 		final double mapSize = MapSize(levelOfDetail);
-		final double x = (Clip(pixelX, 0, mapSize - 1) / mapSize) - 0.5;
-		final double y = 0.5 - (Clip(pixelY, 0, mapSize - 1) / mapSize);
+
+		int wrappedX = (int) wrap(pixelX, 0, mapSize - 1, mapSize);
+		int wrappedY = (int) wrap(pixelY, 0, mapSize - 1, mapSize);
+
+		final double x = (Clip(wrappedX, 0, mapSize - 1) / mapSize) - 0.5;
+		final double y = 0.5 - (Clip(wrappedY, 0, mapSize - 1) / mapSize);
 
 		final double latitude = 90 - 360 * Math.atan(Math.exp(-y * 2 * Math.PI)) / Math.PI;
 		final double longitude = 360 * x;
@@ -282,5 +286,39 @@ public final class TileSystem {
 
 	public static void restoreTileSize() {
 		setTileSize(BASE_TILE_SIZE);
+	}
+
+	/**
+	 * Returns a value that lies within <code>minValue</code> and <code>maxValue</code> by
+	 * subtracting/adding <code>interval</code>.
+	 *
+	 * @param n
+	 *            the input number
+	 * @param minValue
+	 *            the minimum value
+	 * @param maxValue
+	 *            the maximum value
+	 * @param interval
+	 *            the interval length
+	 * @return a value that lies within <code>minValue</code> and <code>maxValue</code> by
+	 *         subtracting/adding <code>interval</code>
+	 */
+	private static double wrap(double n, final double minValue, final double maxValue, final double interval) {
+		if (minValue > maxValue) {
+			throw new IllegalArgumentException("minValue must be smaller than maxValue: "
+					+ minValue + ">" + maxValue);
+		}
+		if (interval > maxValue - minValue + 1) {
+			throw new IllegalArgumentException(
+					"interval must be equal or smaller than maxValue-minValue: " + "min: "
+							+ minValue + " max:" + maxValue + " int:" + interval);
+		}
+		while (n < minValue) {
+			n += interval;
+		}
+		while (n > maxValue) {
+			n -= interval;
+		}
+		return n;
 	}
 }
