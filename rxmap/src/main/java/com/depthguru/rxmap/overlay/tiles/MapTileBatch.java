@@ -3,7 +3,7 @@ package com.depthguru.rxmap.overlay.tiles;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 
-import com.depthguru.rxmap.MathUtils;
+import com.depthguru.rxmap.util.MathUtils;
 import com.depthguru.rxmap.Projection;
 
 import java.util.ArrayList;

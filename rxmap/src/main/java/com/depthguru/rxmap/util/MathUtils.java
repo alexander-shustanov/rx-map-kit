@@ -1,4 +1,4 @@
-package com.depthguru.rxmap;
+package com.depthguru.rxmap.util;
 
 /**
  * MathUtils

@@ -11,6 +11,7 @@ public class Zoom {
     private final float MAX_ZOOM = 18.5f;
 
     private final Axis z;
+    private int ANIMATION_DURATION = 250;
 
     public Zoom(float initialZoom) {
         z = new Axis(initialZoom);
@@ -50,11 +51,11 @@ public class Zoom {
     }
 
     public void zoomIn() {
-        z.scrollBy(1f, 150);
+        z.scrollBy(1f, ANIMATION_DURATION);
     }
 
     public void zoomOut() {
-        z.scrollBy(-1f, 150);
+        z.scrollBy(-1f, ANIMATION_DURATION);
     }
 
     public boolean isFinished() {

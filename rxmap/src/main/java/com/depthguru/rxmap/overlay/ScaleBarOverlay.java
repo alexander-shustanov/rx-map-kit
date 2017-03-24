@@ -228,7 +228,7 @@ public class ScaleBarOverlay extends SimpleOverlay implements GeoConstants {
         }
 
         canvas.save();
-        canvas.concat(projection.getUnScaleMatrix());
+        canvas.concat(projection.getUnRotateAndScaleMatrix());
         canvas.translate(xOffset, yOffset);
         canvas.drawPath(barPath, barPaint);
         drawLatitudeText(canvas, projection);

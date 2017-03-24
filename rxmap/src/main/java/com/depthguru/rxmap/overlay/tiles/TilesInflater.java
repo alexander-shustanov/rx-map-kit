@@ -2,7 +2,7 @@ package com.depthguru.rxmap.overlay.tiles;
 
 import android.graphics.Point;
 
-import com.depthguru.rxmap.MathUtils;
+import com.depthguru.rxmap.util.MathUtils;
 import com.depthguru.rxmap.Projection;
 import com.depthguru.rxmap.TileSystem;
 

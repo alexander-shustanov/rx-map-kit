@@ -27,7 +27,6 @@ class Axis {
     private long startTime;
     private int duration;
 
-    private boolean interrupted = false;
     private double left;
     private double right;
 
@@ -88,10 +87,6 @@ class Axis {
     }
 
     boolean isEnd() {
-        if (interrupted) {
-            interrupted = false;
-            return false;
-        }
         return currentPosition == endPosition;
     }
 
@@ -112,7 +107,6 @@ class Axis {
         startPosition = clamp(startPosition + offset);
         endPosition = clamp(endPosition + offset);
         currentPosition = clamp(currentPosition + offset);
-        interrupted = true;
     }
 
     void reconfigureWithZoomFactor(float scaleFactor, float pivot, int worldSize) {

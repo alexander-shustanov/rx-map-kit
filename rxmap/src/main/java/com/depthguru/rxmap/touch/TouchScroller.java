@@ -122,7 +122,9 @@ public abstract class TouchScroller {
             }
             if (state.inZoom()) {
                 float zoom = state.computeZoom(event, reuse);
+                float rotation = state.computeRotation(event, reuse);
                 performZoom(zoom, reuse);
+                performRotate(rotation, reuse);
             }
         }
     }
@@ -131,10 +133,17 @@ public abstract class TouchScroller {
         onZoom(zoom, pivot);
     }
 
+    private void performRotate(float rotation, PointF pivot) {
+        onRotate(rotation, pivot);
+    }
+
     protected void onStartMotion() {
     }
 
     protected void onZoom(float zoom, PointF pivot) {
+    }
+
+    protected void onRotate(float rotation, PointF pivot) {
     }
 
     private void performScroll(PointF scrollOffset) {

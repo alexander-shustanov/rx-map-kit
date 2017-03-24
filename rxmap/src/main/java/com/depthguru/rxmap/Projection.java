@@ -2,7 +2,10 @@ package com.depthguru.rxmap;
 
 import android.graphics.Matrix;
 import android.graphics.Point;
+import android.graphics.PointF;
 import android.graphics.Rect;
+
+import com.depthguru.rxmap.util.MathUtils;
 
 /**
  * Projection
@@ -21,20 +24,28 @@ public class Projection {
     private final float pivotX;
     private final float pivotY;
 
-    private final Matrix scaleMatrix = new Matrix();
-    private final Matrix unScaleMatrix = new Matrix();
+    private final Matrix rotateAndScaleMatrix = new Matrix();
+    private final Matrix unRotateAndScaleMatrix = new Matrix();
+
+    private final float[] rotateAndScalePoints = new float[2];
+    private final float[] rotateAndScaleVectors = new float[2];
 
     private final float zoom;
     private final int discreteZoom;
+
+    private final float mapOrientation;
 
     private final BoundingBoxE6 boundingBoxE6;
     private final double scaleFactor;
 
     private Rect screenRect;
+    private Rect intrinsicScreenRect;
 
     public Projection(RxMapView mapView) {
         mapWidth = mapView.getWidth();
         mapHeight = mapView.getHeight();
+
+        mapOrientation = mapView.getMapOrientation();
 
         zoom = mapView.getZoom();
         discreteZoom = (int) Math.floor(zoom);
@@ -48,20 +59,25 @@ public class Projection {
         pivotX = mapView.pivot.x;
         pivotY = mapView.pivot.y;
 
-        scaleMatrix.set(mapView.scaleMatrix);
-        scaleMatrix.invert(unScaleMatrix);
+        rotateAndScaleMatrix.set(mapView.rotateAndScaleMatrix);
+        rotateAndScaleMatrix.invert(unRotateAndScaleMatrix);
 
-        screenRect = mapView.getScreenRect();
+        screenRect = mapView.getScreenRect(null);
+        intrinsicScreenRect = mapView.getIntrinsicScreenRect(null);
 
         boundingBoxE6 = new BoundingBoxE6(fromPixels(screenRect.left, screenRect.top), fromPixels(screenRect.right, screenRect.bottom));
     }
 
-    public Matrix getScaleMatrix() {
-        return scaleMatrix;
+    public float getMapOrientation() {
+        return mapOrientation;
     }
 
-    public Matrix getUnScaleMatrix() {
-        return unScaleMatrix;
+    public Matrix getRotateAndScaleMatrix() {
+        return rotateAndScaleMatrix;
+    }
+
+    public Matrix getUnRotateAndScaleMatrix() {
+        return unRotateAndScaleMatrix;
     }
 
     public Point toPixels(GeoPoint geoPoint, Point reuse) {
@@ -125,6 +141,70 @@ public class Projection {
 
     public double getScaleFactor() {
         return scaleFactor;
+    }
+
+    /**
+     * This will revert the current map's scaling and rotation for a point. This can be useful when
+     * drawing to a fixed location on the screen.
+     */
+    public PointF unRotateAndScalePoint(float x, float y, PointF reuse) {
+        if (reuse == null)
+            reuse = new PointF();
+
+        if (getMapOrientation() != 0 || zoom != 1.0f) {
+            rotateAndScalePoints[0] = x;
+            rotateAndScalePoints[1] = y;
+            unRotateAndScaleMatrix.mapPoints(rotateAndScalePoints);
+            reuse.set(rotateAndScalePoints[0], rotateAndScalePoints[1]);
+        } else
+            reuse.set(x, y);
+        return reuse;
+    }
+
+    public PointF unRotateAndScaleVector(float x, float y, PointF reuse) {
+        if (reuse == null)
+            reuse = new PointF();
+
+        if (getMapOrientation() != 0 || zoom != 1.0f) {
+            rotateAndScaleVectors[0] = x;
+            rotateAndScaleVectors[1] = y;
+            unRotateAndScaleMatrix.mapVectors(rotateAndScaleVectors);
+            reuse.set(rotateAndScaleVectors[0], rotateAndScaleVectors[1]);
+        } else
+            reuse.set(x, y);
+        return reuse;
+    }
+
+    /**
+     * This will apply the current map's scaling and rotation for a point. This can be useful when
+     * converting MotionEvents to a screen point.
+     */
+    public PointF rotateAndScalePoint(float x, float y, PointF reuse) {
+        if (reuse == null)
+            reuse = new PointF();
+
+        if (getMapOrientation() != 0 || zoom != 1.0f) {
+            rotateAndScalePoints[0] = x;
+            rotateAndScalePoints[1] = y;
+            rotateAndScaleMatrix.mapPoints(rotateAndScalePoints);
+            reuse.set(rotateAndScalePoints[0], rotateAndScalePoints[1]);
+        } else
+            reuse.set(x, y);
+        return reuse;
+    }
+
+    public PointF rotateAndScaleVector(float x, float y, PointF reuse) {
+        if (reuse == null)
+            reuse = new PointF();
+
+        if (getMapOrientation() != 0 || zoom != 1.0f) {
+            rotateAndScalePoints[0] = x;
+            rotateAndScalePoints[1] = y;
+            rotateAndScaleMatrix.mapVectors(rotateAndScalePoints);
+            reuse.set(rotateAndScalePoints[0], rotateAndScalePoints[1]);
+        } else
+            reuse.set(x, y);
+        return reuse;
     }
 
     public interface ProjectionVisitor<R> {

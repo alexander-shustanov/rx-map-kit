@@ -59,23 +59,19 @@ public class TileOverlay extends Overlay<MapTileBatch> {
 
         @Override
         public void draw(Canvas canvas, Projection projection) {
-            int startX = projection.getOffsetX();
-            int startY = projection.getOffsetY();
 
             Rect screenRect = projection.getScreenRect();
             int worldSize = projection.getWorldSize();
+            int repeatsX = (int) Math.ceil(screenRect.width() / (float) worldSize);
+            int repeatsY = (int) Math.ceil(screenRect.height() / (float) worldSize);
 
-            int repeatsX = screenRect.width() / worldSize;
-            int repeatsY = screenRect.height() / worldSize;
-
-            if (screenRect.width() % worldSize != 0) {
-                repeatsX++;
-            }
-            if (screenRect.height() % worldSize != 0) {
-                repeatsY++;
-            }
+            int startX = projection.getOffsetX();
+            int startY = projection.getOffsetY();
 
             canvas.save();
+
+            int renderedCount = 0;
+            int rejectedCount = 0;
 
             for (Map.Entry<MapTile, Drawable> entry : mapTileBatch.getTiles().entrySet()) {
                 Drawable drawable = entry.getValue();
@@ -92,20 +88,44 @@ public class TileOverlay extends Overlay<MapTileBatch> {
                     tileSize = tileSize / (1 << (-zoomDelta));
                 }
 
-                for (int i = -1; i < repeatsX; i++) {
-                    for (int j = -1; j < repeatsY; j++) {
-                        int x = (int) (tile.getX() * tileSize + worldSize * i + startX);
-                        int y = (int) (tile.getY() * tileSize + worldSize * j + startY);
+                int start_i = -1;
+                for (; ; start_i--) {
+                    int x = calculateTileStart(tile.getX(), tileSize, worldSize * start_i, startX);
+                    if (x <= screenRect.left) {
+                        break;
+                    }
+                }
+
+                int start_j = -1;
+                for (; ; start_j--) {
+                    int y = calculateTileStart(tile.getY(), tileSize, worldSize * start_j, startY);
+                    if (y <= screenRect.left) {
+                        break;
+                    }
+                }
+
+                for (int i = start_i; i < repeatsX; i++) {
+                    for (int j = start_j; j < repeatsY; j++) {
+                        int x = calculateTileStart(tile.getX(), tileSize, worldSize * i, startX);
+                        int y = calculateTileStart(tile.getY(), tileSize, worldSize * j, startY);
 
                         if (!canvas.quickReject(x, y, ((int) (x + tileSize)), ((int) (y + tileSize)), Canvas.EdgeType.BW)) {
                             drawable.setBounds(x, y, x + ((int) tileSize), (int) (y + tileSize));
                             drawable.draw(canvas);
+                            renderedCount++;
+                        } else {
+                            rejectedCount++;
                         }
                     }
                 }
             }
 
             canvas.restore();
+            System.out.println(String.format("lalala renderedCount=%s  rejectedCount=%s", renderedCount, rejectedCount));
+        }
+
+        private int calculateTileStart(int tileNo, double tileSize, int worldOffset, int offset) {
+            return (int) (tileNo * tileSize + worldOffset + offset);
         }
     }
 }

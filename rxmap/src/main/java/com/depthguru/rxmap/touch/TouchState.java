@@ -19,6 +19,7 @@ public class TouchState {
     private final float touchSlop;
     private final float flingVelocitySlop;
     private float fingersDistance;
+    private float initialRotation;
     private State state = State.NONE;
 
     public TouchState(float touchSlop, float flingVelocitySlop) {
@@ -145,8 +146,25 @@ public class TouchState {
         return (float) (Math.log(computeFingerDistance(event) / fingersDistance) / LOG2);
     }
 
+    public float computeRotation(MotionEvent event, PointF reuse) {
+        reuse.x = (event.getX(0) + event.getX(1)) / 2f;
+        reuse.y = (event.getY(0) + event.getY(1)) / 2f;
+        float rotation = rotation(event);
+        float delta = rotation - initialRotation;
+        initialRotation += delta;
+        return delta;
+    }
+
+    private float rotation(MotionEvent event) {
+        double delta_x = (event.getX(0) - event.getX(1));
+        double delta_y = (event.getY(0) - event.getY(1));
+        double radians = Math.atan2(delta_y, delta_x);
+        return (float) Math.toDegrees(radians);
+    }
+
     public void onPointerDown(MotionEvent event) {
         state = State.ZOOM;
+        initialRotation = rotation(event);
     }
 
     public void onPointerUp(MotionEvent event) {
