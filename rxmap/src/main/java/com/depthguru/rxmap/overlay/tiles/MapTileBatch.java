@@ -9,6 +9,7 @@ import com.depthguru.rxmap.Projection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -17,15 +18,20 @@ import java.util.Map;
  * </p>
  * alexander.shustanov on 16.12.16
  */
-public class MapTileBatch {
-    private final Map<MapTile, Drawable> tiles;
+class MapTileBatch {
+
+    private final Map<MapTile, TileDrawable> tiles = new HashMap<>();
     private final Projection projection;
     private List<MapTile> mapTiles;
 
     private Rect tilesRect = new Rect(Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE);
 
-    public MapTileBatch(Map<MapTile, Drawable> tiles, Collection<MapTile> mapTiles, Projection projection) {
-        this.tiles = tiles;
+    MapTileBatch(Map<MapTile, Drawable> tiles, Collection<MapTile> mapTiles, Projection projection) {
+
+        for (MapTile mapTile : tiles.keySet()) {
+            this.tiles.put(mapTile, new TileDrawable(mapTile, tiles.get(mapTile), projection.getDiscreteZoom()));
+        }
+
         this.mapTiles = new ArrayList<>(mapTiles);
         sortList();
         this.projection = projection;
@@ -49,15 +55,15 @@ public class MapTileBatch {
         Collections.sort(mapTiles, (tile1, tile2) -> tile1.getZoomLevel() - tile2.getZoomLevel());
     }
 
-    public Collection<MapTile> getMapTiles() {
+    private Collection<MapTile> getMapTiles() {
         return mapTiles;
     }
 
-    public Map<MapTile, Drawable> getTiles() {
+    public Map<MapTile, TileDrawable> getTiles() {
         return tiles;
     }
 
-    public Drawable getTile(MapTile mapTile) {
+    private TileDrawable getTile(MapTile mapTile) {
         return tiles.get(mapTile);
     }
 
@@ -65,12 +71,18 @@ public class MapTileBatch {
         return projection;
     }
 
-    public MapTileBatch completeWith(MapTileBatch last) {
+    MapTileBatch completeWith(MapTileBatch last) {
 
         final int zoom = projection.getDiscreteZoom();
 
         iterTiles:
         for (MapTile mapTile : last.getMapTiles()) {
+
+            TileDrawable tile = last.getTile(mapTile);
+            if(tile == null) {
+                continue;
+            }
+
             final int zoomDelta = zoom - mapTile.getZoomLevel();
             int tileX = mapTile.getX();
             int tileY = mapTile.getY();
@@ -91,14 +103,14 @@ public class MapTileBatch {
                 continue;
             }
 
-            if (zoomDelta <= 0) {
+            if (zoomDelta < 0) {
                 MapTile currentZoomEquivalent = new MapTile(tileX, tileY, zoom);
                 if (getTile(currentZoomEquivalent) != null) {
                     continue;
                 }
 
                 mapTiles.add(mapTile);
-                tiles.put(mapTile, last.getTile(mapTile));
+                copyTile(tile, mapTile);
             } else {
                 int range = 1 << zoomDelta;
                 int xRange = Math.min(tileX + range, tilesRect.right) - tileX;
@@ -108,7 +120,7 @@ public class MapTileBatch {
                         MapTile currentZoomEquivalent = new MapTile(tileX + i, tileY + j, zoom);
                         if (getTile(currentZoomEquivalent) == null) {
                             mapTiles.add(mapTile);
-                            tiles.put(mapTile, last.getTile(mapTile));
+                            copyTile(tile, mapTile);
                             continue iterTiles;
                         }
                     }
@@ -119,5 +131,9 @@ public class MapTileBatch {
         sortList();
 
         return this;
+    }
+
+    private TileDrawable copyTile(TileDrawable tileDrawable, MapTile mapTile) {
+        return tiles.put(mapTile, new TileDrawable(mapTile, tileDrawable.drawable, projection.getDiscreteZoom()));
     }
 }

@@ -7,15 +7,14 @@ package com.depthguru.rxmap.touch;
  */
 
 public class Zoom {
-    private final float MIN_ZOOM = 0.0f;
-    private final float MAX_ZOOM = 18.5f;
+    private static final float MIN_ZOOM = 0.0f;
+    private static final float MAX_ZOOM = 18.5f;
 
     private final Axis z;
     private int ANIMATION_DURATION = 250;
 
     public Zoom(float initialZoom) {
-        z = new Axis(initialZoom);
-        z.clamp(MIN_ZOOM, MAX_ZOOM);
+        z = new Axis(initialZoom, MIN_ZOOM, MAX_ZOOM);
     }
 
     public float getCurrentZoom() {

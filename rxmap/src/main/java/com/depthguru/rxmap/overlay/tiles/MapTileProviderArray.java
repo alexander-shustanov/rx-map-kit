@@ -8,9 +8,7 @@ import android.util.Pair;
 import com.depthguru.rxmap.Projection;
 import com.depthguru.rxmap.TileSystem;
 import com.depthguru.rxmap.rx.MapSchedulers;
-import com.depthguru.rxmap.rx.SingleItemBuffer;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -46,7 +44,9 @@ public class MapTileProviderArray extends MapTileProviderBase {
         int widthPixels = displayMetrics.widthPixels;
         int tileSize = TileSystem.getTileSize();
 
-        cacheSize = (int) ((heightPixels/tileSize + 2)*(widthPixels/tileSize + 2)*1.5);
+        int tilesPerWidth = (int) Math.ceil(Math.sqrt(2) * widthPixels / (double) tileSize) + 2;
+        int tilesPerHeight = (int) Math.ceil(Math.sqrt(2) * heightPixels / (double) tileSize) + 2;
+        cacheSize = tilesPerWidth * tilesPerHeight;
 
         tileCache = new TileCache(cacheSize);
         loader = new TileLoader(modules, loadedTiles);
@@ -83,7 +83,7 @@ public class MapTileProviderArray extends MapTileProviderBase {
                                 if (drawable != null) {
                                     tiles.put(mapTile, drawable);
                                 } else {
-                                    if(!inLoading.contains(mapTile) && loader.schedule(new MapTileState(mapTile))) {
+                                    if (!inLoading.contains(mapTile) && loader.schedule(new MapTileState(mapTile))) {
                                         inLoading.add(mapTile);
                                     }
                                 }

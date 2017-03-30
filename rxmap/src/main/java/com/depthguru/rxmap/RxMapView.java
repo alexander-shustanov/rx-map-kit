@@ -29,12 +29,14 @@ import rx.subjects.PublishSubject;
  */
 public class RxMapView extends ViewGroup {
 
+    public static final boolean DEBUG = false;
+
     final Matrix rotateAndScaleMatrix = new Matrix();
     final PointF pivot = new PointF();
     final Zoom zoom = new Zoom(2);
 
     private final PublishSubject<Projection> projectionSubject = PublishSubject.create();
-    private final Scroller scroller = new Scroller(1000, 500);
+    private final Scroller scroller = new Scroller(1000, 500, zoom.getDiscreteZoom());
     private final TouchScroller touchScroller;
     private final OverlayManager overlayManager = new OverlayManager(projectionSubject, this);
     private final BehaviorSubject<ScrollEvent> scrollEventObservable = BehaviorSubject.create();
@@ -86,6 +88,7 @@ public class RxMapView extends ViewGroup {
 
     public void setMapOrientation(float degrees) {
         mapOrientation = degrees % 360.0f;
+        computeProjection(false);
         invalidate();
     }
 
@@ -108,7 +111,8 @@ public class RxMapView extends ViewGroup {
             }
 
             if (zoomDiff != 0) {
-                scroller.reconfigureWithZoomFactor(zoomDiff, pivot, TileSystem.getTileSize() << endZoom);
+                scroller.setZoom(endZoom);
+                scroller.reconfigureWithZoomFactor(zoomDiff, pivot.x, pivot.y);
             } else {
                 postInvalidate();
             }
@@ -127,6 +131,9 @@ public class RxMapView extends ViewGroup {
         float dx = pivotX - reuse.x;
         float dy = pivotY - reuse.y;
         scroller.offsetBy(-dx, -dy);
+        if (dx != 0 || dy != 0) {
+            scrollTo(scroller.getCurrX(), scroller.getCurrY());
+        }
 
         pivot.set(pivotX, pivotY);
         computeProjection(false);
@@ -203,6 +210,7 @@ public class RxMapView extends ViewGroup {
         } else {
             TileSystem.restoreTileSize();
         }
+        scroller.setZoom(zoom.getDiscreteZoom());
     }
 
     @Override
@@ -240,7 +248,8 @@ public class RxMapView extends ViewGroup {
             updatePivot(pivot.x, pivot.y);
 
             if (zoomDiff != 0) {
-                scroller.reconfigureWithZoomFactor(zoomDiff, pivot, TileSystem.getTileSize() << endZoom);
+                scroller.setZoom(endZoom);
+                scroller.reconfigureWithZoomFactor(zoomDiff, pivot.x, pivot.y);
                 onZoomEventObservable.onNext(endZoom);
             }
         }

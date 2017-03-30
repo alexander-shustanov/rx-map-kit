@@ -1,6 +1,6 @@
 package com.depthguru.rxmap.touch;
 
-import android.graphics.PointF;
+import com.depthguru.rxmap.TileSystem;
 
 /**
  * Scroller
@@ -13,9 +13,10 @@ public class Scroller {
     private final Axis x;
     private final Axis y;
 
-    public Scroller(int x, int y) {
+    public Scroller(int x, int y, int zoom) {
         this.x = new Axis(x);
         this.y = new Axis(y);
+        setZoom(zoom);
     }
 
     public void scrollBy(float dx, float dy) {
@@ -68,14 +69,15 @@ public class Scroller {
         y.stopScroll();
     }
 
-    public void reconfigureWithZoomFactor(int zoomDiff, PointF pivot, int worldSize) {
+    public void reconfigureWithZoomFactor(int zoomDiff, float pivotX, float pivotY) {
         float scaleFactor = (float) Math.pow(2, zoomDiff);
-        x.reconfigureWithZoomFactor(scaleFactor, pivot.x, worldSize);
-        y.reconfigureWithZoomFactor(scaleFactor, pivot.y, worldSize);
+        x.reconfigureWithZoomFactor(scaleFactor, pivotX);
+        y.reconfigureWithZoomFactor(scaleFactor, pivotY);
     }
 
-    public void setPosition(int x, int y) {
-        this.x.setPosition(x);
-        this.y.setPosition(y);
+    public void setZoom(int zoom) {
+        final int worldSize = TileSystem.MapSize(zoom);
+        x.setFullValue(worldSize);
+        y.setFullValue(worldSize);
     }
 }

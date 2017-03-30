@@ -68,13 +68,12 @@ public class MainActivity extends Activity {
         drawable = getResources().getDrawable(R.mipmap.ic_launcher);
 
         RxMapView mapView = new RxMapView(this);
-        OverlayManager overlayManager = mapView.getOverlayManager();
+        mapView.setTilesScaledToDpi(true);
 
+        OverlayManager overlayManager = mapView.getOverlayManager();
         overlayManager.add(new TileOverlay(this));
 //        overlayManager.add(new ItemizedOverlay(itemsProvider));
         overlayManager.add(new ScaleBarOverlay(mapView));
-
-        mapView.setTilesScaledToDpi(true);
 
         setContentView(mapView);
 

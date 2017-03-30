@@ -44,9 +44,6 @@ public class FileStorageProviderModule extends MapTileProviderModule {
                 try {
                     if (file.exists()) {
                         Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath(), opts);
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                            bitmap.setHasMipMap(true);
-                        }
                         mapTileState.setDrawable(new BitmapDrawable(context.getResources(), bitmap));
                     }
                 } finally {

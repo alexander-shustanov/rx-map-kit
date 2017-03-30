@@ -41,6 +41,7 @@ public class TileLoader extends Thread {
 
         Subscription subscription = loadResultConveyor
                 .filter(mapTileState -> mapTileState.getDrawable() != null || modules.size() <= mapTileState.getState())
+                .onBackpressureDrop(loadResultConveyor::onNext)
                 .subscribe(successLoadedObserver);
         this.subscription.add(subscription);
 

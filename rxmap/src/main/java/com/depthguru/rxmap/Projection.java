@@ -5,8 +5,6 @@ import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
 
-import com.depthguru.rxmap.util.MathUtils;
-
 /**
  * Projection
  * </p>
@@ -39,7 +37,6 @@ public class Projection {
     private final double scaleFactor;
 
     private Rect screenRect;
-    private Rect intrinsicScreenRect;
 
     public Projection(RxMapView mapView) {
         mapWidth = mapView.getWidth();
@@ -53,8 +50,8 @@ public class Projection {
 
         worldSize = TileSystem.getTileSize() << discreteZoom;
 
-        offsetX = MathUtils.mod(-mapView.getScrollX(), worldSize);
-        offsetY = MathUtils.mod(-mapView.getScrollY(), worldSize);
+        offsetX = -mapView.getScrollX();
+        offsetY = -mapView.getScrollY();
 
         pivotX = mapView.pivot.x;
         pivotY = mapView.pivot.y;
@@ -63,7 +60,6 @@ public class Projection {
         rotateAndScaleMatrix.invert(unRotateAndScaleMatrix);
 
         screenRect = mapView.getScreenRect(null);
-        intrinsicScreenRect = mapView.getIntrinsicScreenRect(null);
 
         boundingBoxE6 = new BoundingBoxE6(fromPixels(screenRect.left, screenRect.top), fromPixels(screenRect.right, screenRect.bottom));
     }
@@ -124,7 +120,7 @@ public class Projection {
     }
 
     public int getDiscreteZoom() {
-        return (int) Math.floor(zoom);
+        return discreteZoom;
     }
 
     public float getZoom() {

@@ -27,16 +27,22 @@ class Axis {
     private long startTime;
     private int duration;
 
-    private double left;
-    private double right;
+    private double minValue = -Double.MAX_VALUE;
+    private double maxValue = Double.MAX_VALUE;
+
+    private double fullValue = Double.MAX_VALUE;
 
     Axis(float initialPosition) {
-
         startPosition = initialPosition;
         currentPosition = initialPosition;
         endPosition = initialPosition;
+        checkFullValue();
+    }
 
-        resetClamp();
+    Axis(float initialPosition, double minValue, double maxValue) {
+        this(initialPosition);
+        this.minValue = minValue;
+        this.maxValue = maxValue;
     }
 
     void scrollBy(float delta) {
@@ -75,6 +81,24 @@ class Axis {
                 currentPosition = (normalTime * (endPosition - startPosition) + startPosition);
             }
         }
+
+        checkFullValue();
+    }
+
+    void setFullValue(double fullValue) {
+        this.fullValue = fullValue;
+    }
+
+    private void checkFullValue() {
+        if (currentPosition >= fullValue) {
+            currentPosition -= fullValue;
+            startPosition -= fullValue;
+            endPosition -= fullValue;
+        } else if (currentPosition < 0) {
+            currentPosition += fullValue;
+            startPosition += fullValue;
+            endPosition += fullValue;
+        }
     }
 
     private float getNormalTime() {
@@ -98,7 +122,7 @@ class Axis {
         fixPosition();
         endPosition = clamp(startPosition - velocity * duration / 2f);
         this.velocity = velocity;
-        this.duration = (int) ((startPosition - endPosition)/velocity*2f);
+        this.duration = (int) ((startPosition - endPosition) / velocity * 2f);
         this.tension = tension;
         interpolator = LINEAR;
     }
@@ -107,9 +131,10 @@ class Axis {
         startPosition = clamp(startPosition + offset);
         endPosition = clamp(endPosition + offset);
         currentPosition = clamp(currentPosition + offset);
+        checkFullValue();
     }
 
-    void reconfigureWithZoomFactor(float scaleFactor, float pivot, int worldSize) {
+    void reconfigureWithZoomFactor(float scaleFactor, float pivot) {
         this.startPosition += pivot;
         this.endPosition += pivot;
         this.currentPosition += pivot;
@@ -122,9 +147,7 @@ class Axis {
         this.endPosition -= pivot;
         this.currentPosition -= pivot;
 
-        this.startPosition %= worldSize;
-        this.endPosition %= worldSize;
-        this.currentPosition %= worldSize;
+        checkFullValue();
 
         this.startPosition = clamp(this.startPosition);
         this.endPosition = clamp(this.endPosition);
@@ -143,22 +166,12 @@ class Axis {
         return currentPosition;
     }
 
-    void clamp(double left, double right) {
-        this.left = left;
-        this.right = right;
-    }
-
-    private void resetClamp() {
-        this.left = -Double.MAX_VALUE;
-        this.right = Double.MAX_VALUE;
-    }
-
     private double clamp(double value) {
-        if (value < left) {
-            return left;
+        if (value < minValue) {
+            return minValue;
         }
-        if (value > right) {
-            return right;
+        if (value > maxValue) {
+            return maxValue;
         }
         return value;
     }
@@ -170,5 +183,6 @@ class Axis {
         startPosition = clamp(pos);
         endPosition = clamp(pos);
         currentPosition = clamp(pos);
+        checkFullValue();
     }
 }
