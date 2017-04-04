@@ -5,7 +5,9 @@ import android.graphics.drawable.Drawable;
 import com.depthguru.rxmap.TileSystem;
 
 /**
- * Created by kandalin on 24.03.17.
+ * TileDrawable
+ * </p>
+ * kandalin on 24.03.17.
  */
 
 public class TileDrawable {

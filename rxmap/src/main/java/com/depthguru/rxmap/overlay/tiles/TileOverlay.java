@@ -82,26 +82,22 @@ public class TileOverlay extends Overlay<MapTileBatch> {
             }
 
             int zoomDelta = projection.getDiscreteZoom() - baseProjection().getDiscreteZoom();
-            float scale = 1;
+            double scale = 1;
             if (zoomDelta > 0) {
                 scale = 1 << zoomDelta;
             } else if (zoomDelta < 0) {
-                scale = 1 / (float) (1 << -zoomDelta);
+                scale = 1 / (double) (1 << -zoomDelta);
             }
 
             canvas.save();
-            canvas.translate(offsetX, offsetY);
-            canvas.scale(scale, scale);
 
             for (int i = start_i; i < repeatsX; i++) {
                 for (int j = start_j; j < repeatsY; j++) {
 
-                    int worldXOffset = worldSize * i;
-                    int worldYOffset = worldSize * j;
+                    double worldXOffset = worldSize * i * scale + offsetX;
+                    double worldYOffset = worldSize * j * scale + offsetY;
 
                     canvas.save();
-                    canvas.translate(worldXOffset, worldYOffset);
-
 
                     for (Map.Entry<MapTile, TileDrawable> entry : mapTileBatch.getTiles().entrySet()) {
                         TileDrawable tileDrawable = entry.getValue();
@@ -109,22 +105,30 @@ public class TileOverlay extends Overlay<MapTileBatch> {
                             continue;
                         }
 
-                        int startX = tileDrawable.startX;
-                        int endX = tileDrawable.endX;
-                        int startY = tileDrawable.startY;
-                        int endY = tileDrawable.endY;
+                        double startX = tileDrawable.startX * scale;
+                        double endX = tileDrawable.endX * scale;
+                        double startY = tileDrawable.startY * scale;
+                        double endY = tileDrawable.endY * scale;
 
-                        if (!canvas.quickReject(startX, startY, endX, endY, Canvas.EdgeType.BW)) {
+                        if (!canvas.quickReject(
+                                (float) (startX + worldXOffset),
+                                (float) (startY + worldYOffset),
+                                (float) (endX + worldXOffset),
+                                (float) (endY + worldYOffset), Canvas.EdgeType.BW)) {
 
                             MapTile mapTile = entry.getKey();
 
-                            tileDrawable.drawable.setBounds(startX, startY, endX, endY);
+                            tileDrawable.drawable.setBounds(
+                                    (int) (startX + worldXOffset),
+                                    (int) (startY + worldYOffset),
+                                    (int) (endX + worldXOffset),
+                                    (int) (endY + worldYOffset));
                             tileDrawable.drawable.draw(canvas);
 
                             if (RxMapView.DEBUG) {
                                 String text = String.format("z=%s x=%s y=%s", mapTile.getZoomLevel(), mapTile.getX(), mapTile.getY());
-                                canvas.drawText(text, 0, text.length(), startX + 20, startY + 20, debugPaint);
-                                canvas.drawRect(startX + 10, startY + 10, endX - 10, endY - 10, debugPaint);
+                                canvas.drawText(text, 0, text.length(), ((float) (startX + 20)), (float) (startY + 20), debugPaint);
+                                canvas.drawRect(((float) (startX + 10)), ((float) (startY + 10)), ((float) (endX - 10)), ((float) (endY - 10)), debugPaint);
                             }
                         }
                     }
