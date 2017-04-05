@@ -7,8 +7,8 @@ package com.depthguru.rxmap.touch;
  */
 
 public class Zoom {
-    private static final float MIN_ZOOM = 0.0f;
-    private static final float MAX_ZOOM = 18.5f;
+    public static final float MIN_ZOOM = 0.0f;
+    public static final float MAX_ZOOM = 18.5f;
 
     private final Axis z;
     private int ANIMATION_DURATION = 250;
@@ -22,7 +22,7 @@ public class Zoom {
     }
 
     public int getDiscreteZoom() {
-        return (int) Math.floor(z.getCurrentPosition());
+        return (int) z.getCurrentPosition();
     }
 
     public boolean computeZoomOffset() {
@@ -33,13 +33,13 @@ public class Zoom {
         return inProcess;
     }
 
-    public void setZoom(float zoom) {
-        z.setPosition(zoom);
+    public int add(float zoom) {
+        return setZoom((float) (z.getCurrentPosition() + zoom));
     }
 
-    public int add(float zoom) {
+    public int setZoom(float zoom) {
         int startZoom = getDiscreteZoom();
-        z.setPosition((float) (z.getCurrentPosition() + zoom));
+        z.setPosition(zoom);
         int endZoom = getDiscreteZoom();
         return endZoom - startZoom;
     }

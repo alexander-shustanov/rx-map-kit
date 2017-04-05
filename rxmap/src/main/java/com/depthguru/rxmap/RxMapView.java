@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 import com.depthguru.rxmap.event.FlingEvent;
 import com.depthguru.rxmap.event.ScrollEvent;
 import com.depthguru.rxmap.overlay.OverlayManager;
+import com.depthguru.rxmap.touch.Rotation;
 import com.depthguru.rxmap.touch.Scroller;
 import com.depthguru.rxmap.touch.TouchScroller;
 import com.depthguru.rxmap.touch.Zoom;
@@ -34,9 +35,10 @@ public class RxMapView extends ViewGroup {
     final Matrix rotateAndScaleMatrix = new Matrix();
     final PointF pivot = new PointF();
     final Zoom zoom = new Zoom(2);
+    final Scroller scroller = new Scroller(1000, 500, zoom.getDiscreteZoom());
+    final Rotation rotation = new Rotation();
 
     private final PublishSubject<Projection> projectionSubject = PublishSubject.create();
-    private final Scroller scroller = new Scroller(1000, 500, zoom.getDiscreteZoom());
     private final TouchScroller touchScroller;
     private final OverlayManager overlayManager = new OverlayManager(projectionSubject, this);
     private final BehaviorSubject<ScrollEvent> scrollEventObservable = BehaviorSubject.create();
@@ -44,8 +46,7 @@ public class RxMapView extends ViewGroup {
     private final BehaviorSubject<Void> flingEndEventObservable = BehaviorSubject.create();
     private final BehaviorSubject<Integer> onZoomEventObservable = BehaviorSubject.create();
 
-    private Projection projection;
-    private float mapOrientation = 0;
+    Projection projection;
     private final PointF reuse = new PointF();
 
     public RxMapView(Context context) {
@@ -64,6 +65,11 @@ public class RxMapView extends ViewGroup {
         setBackground(null);
         setScrollX(scroller.getCurrX());
         setScrollY(scroller.getCurrY());
+        computeProjection(true);
+    }
+
+    public Observable<Projection> getProjectionObservable() {
+        return projectionSubject;
     }
 
     public Observable<ScrollEvent> getScrollEventObservable() {
@@ -82,14 +88,12 @@ public class RxMapView extends ViewGroup {
         return onZoomEventObservable;
     }
 
-    public float getMapOrientation() {
-        return mapOrientation;
+    public float getRotation() {
+        return rotation.getRotation();
     }
 
-    public void setMapOrientation(float degrees) {
-        mapOrientation = degrees % 360.0f;
-        computeProjection(false);
-        invalidate();
+    public IGeoPoint getMapCenter() {
+        return projection.fromPixels(getWidth() / 2, getHeight() / 2, null);
     }
 
     @Override
@@ -102,11 +106,17 @@ public class RxMapView extends ViewGroup {
         int startZoom = zoom.getDiscreteZoom();
         boolean isFlinging = scroller.isFlinging();
 
-        if (scroller.computeScrollOffset() || zoom.computeZoomOffset()) {
+        boolean inScroll = scroller.computeScrollOffset();
+        boolean inZoom = zoom.computeZoomOffset();
+        boolean inRotate = rotation.computeRotation();
+
+        if (inScroll || inZoom || inRotate
+                || getScrollX() != scroller.getCurrX()
+                || getScrollY() != scroller.getCurrY()) {
             int endZoom = zoom.getDiscreteZoom();
             int zoomDiff = endZoom - startZoom;
 
-            if (scroller.isFinished() && zoom.isFinished()) {
+            if (scroller.isFinished() && zoom.isFinished() && rotation.isFinished()) {
                 updatePivot(getWidth() / 2, getHeight() / 2);
             }
 
@@ -126,26 +136,23 @@ public class RxMapView extends ViewGroup {
         }
     }
 
-    private void updatePivot(float pivotX, float pivotY) {
+    void updatePivot(float pivotX, float pivotY) {
         projection.unRotateAndScalePoint(pivotX, pivotY, reuse);//real offset pivot
         float dx = pivotX - reuse.x;
         float dy = pivotY - reuse.y;
         scroller.offsetBy(-dx, -dy);
-        if (dx != 0 || dy != 0) {
-            scrollTo(scroller.getCurrX(), scroller.getCurrY());
-        }
 
         pivot.set(pivotX, pivotY);
         computeProjection(false);
         invalidate();
     }
 
-    private void computeProjection(boolean broadcast) {
+    void computeProjection(boolean broadcast) {
         rotateAndScaleMatrix.reset();
 
         float scale = zoom.getScaleFactor();
         rotateAndScaleMatrix.preScale(scale, scale, pivot.x, pivot.y);
-        rotateAndScaleMatrix.preRotate(mapOrientation, pivot.x, pivot.y);
+        rotateAndScaleMatrix.preRotate(rotation.getRotation(), pivot.x, pivot.y);
 
         projection = new Projection(this);
         if (broadcast) {
@@ -173,12 +180,17 @@ public class RxMapView extends ViewGroup {
         return zoom.getCurrentZoom();
     }
 
+    public int getDiscreteZoom() {
+        return zoom.getDiscreteZoom();
+    }
+
     public OverlayManager getOverlayManager() {
         return overlayManager;
     }
 
     public Rect getScreenRect(final Rect reuse) {
         final Rect out = getIntrinsicScreenRect(reuse);
+        float mapOrientation = rotation.getRotation();
         if (mapOrientation != 0 && mapOrientation != 180) {
             GeometryMath.getBoundingBoxForRotatedRectangle(
                     out, out.centerX(), out.centerY(),
@@ -256,7 +268,9 @@ public class RxMapView extends ViewGroup {
 
         @Override
         protected void onRotate(float rotation, PointF pivot) {
-            setMapOrientation(RxMapView.this.mapOrientation + rotation);
+            RxMapView.this.rotation.add(rotation);
+            computeProjection(false);
+            invalidate();
             updatePivot(pivot.x, pivot.y);
         }
 

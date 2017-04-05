@@ -19,9 +19,19 @@ public class Scroller {
         setZoom(zoom);
     }
 
+    public void scrollTo(int x, int y) {
+        this.x.setPosition(x);
+        this.y.setPosition(y);
+    }
+
     public void scrollBy(float dx, float dy) {
         x.scrollBy(dx);
         y.scrollBy(dy);
+    }
+
+    public void scrollBy(int dx, int dy, int duration) {
+        x.scrollBy(dx, duration);
+        y.scrollBy(dy, duration);
     }
 
     public boolean isFlinging() {

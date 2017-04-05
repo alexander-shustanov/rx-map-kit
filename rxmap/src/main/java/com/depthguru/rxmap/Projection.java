@@ -37,12 +37,13 @@ public class Projection {
     private final double scaleFactor;
 
     private Rect screenRect;
+    private Rect intrinsicScreenRect;
 
     public Projection(RxMapView mapView) {
         mapWidth = mapView.getWidth();
         mapHeight = mapView.getHeight();
 
-        mapOrientation = mapView.getMapOrientation();
+        mapOrientation = mapView.rotation.getRotation();
 
         zoom = mapView.getZoom();
         discreteZoom = (int) Math.floor(zoom);
@@ -60,8 +61,25 @@ public class Projection {
         rotateAndScaleMatrix.invert(unRotateAndScaleMatrix);
 
         screenRect = mapView.getScreenRect(null);
+        intrinsicScreenRect = mapView.getIntrinsicScreenRect(null);
 
         boundingBoxE6 = new BoundingBoxE6(fromPixels(screenRect.left, screenRect.top), fromPixels(screenRect.right, screenRect.bottom));
+    }
+
+    public Rect getScreenRect() {
+        return screenRect;
+    }
+
+    public Rect getIntrinsicScreenRect() {
+        return intrinsicScreenRect;
+    }
+
+    public int getMapWidth() {
+        return mapWidth;
+    }
+
+    public int getMapHeight() {
+        return mapHeight;
     }
 
     public float getMapOrientation() {
@@ -76,9 +94,8 @@ public class Projection {
         return unRotateAndScaleMatrix;
     }
 
-    public Point toPixels(GeoPoint geoPoint, Point reuse) {
+    public Point toPixels(IGeoPoint geoPoint, Point reuse) {
         Point point = TileSystem.LatLongToPixelXY(geoPoint.getLatitude(), geoPoint.getLongitude(), discreteZoom, reuse);
-        point.negate();
         point.offset(offsetX, offsetY);
         return point;
     }
@@ -89,10 +106,6 @@ public class Projection {
 
     public GeoPoint fromPixels(int x, int y, GeoPoint reuse) {
         return TileSystem.PixelXYToLatLong(x - offsetX, y - offsetY, discreteZoom, reuse);
-    }
-
-    public Rect getScreenRect() {
-        return screenRect;
     }
 
     public int getOffsetX() {
@@ -137,6 +150,13 @@ public class Projection {
 
     public double getScaleFactor() {
         return scaleFactor;
+    }
+
+    public Point toMercatorPixels(int x, int y, Point reuse) {
+        final Point out = reuse != null ? reuse : new Point();
+        out.set(x, y);
+        out.offset(-offsetX, -offsetY);
+        return out;
     }
 
     /**
