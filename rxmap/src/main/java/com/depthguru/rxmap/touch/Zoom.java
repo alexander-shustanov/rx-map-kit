@@ -57,6 +57,10 @@ public class Zoom {
         z.scrollBy(-1f, ANIMATION_DURATION);
     }
 
+    public void stopZoom() {
+        z.stopScroll();
+    }
+
     public boolean isFinished() {
         return z.isEnd();
     }

@@ -19,6 +19,9 @@ import com.depthguru.rxmap.touch.TouchScroller;
 import com.depthguru.rxmap.touch.Zoom;
 import com.depthguru.rxmap.util.GeometryMath;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import rx.Observable;
 import rx.subjects.BehaviorSubject;
 import rx.subjects.PublishSubject;
@@ -35,19 +38,23 @@ public class RxMapView extends ViewGroup {
     final Matrix rotateAndScaleMatrix = new Matrix();
     final PointF pivot = new PointF();
     final Zoom zoom = new Zoom(2);
-    final Scroller scroller = new Scroller(1000, 500, zoom.getDiscreteZoom());
+    final Scroller scroller = new Scroller(0, 0, zoom.getDiscreteZoom());
     final Rotation rotation = new Rotation();
 
-    private final PublishSubject<Projection> projectionSubject = PublishSubject.create();
     private final TouchScroller touchScroller;
+    private final PointF reuse = new PointF();
+
+    private final PublishSubject<Projection> projectionSubject = PublishSubject.create();
     private final OverlayManager overlayManager = new OverlayManager(projectionSubject, this);
     private final BehaviorSubject<ScrollEvent> scrollEventObservable = BehaviorSubject.create();
     private final BehaviorSubject<FlingEvent> flingEventObservable = BehaviorSubject.create();
     private final BehaviorSubject<Void> flingEndEventObservable = BehaviorSubject.create();
     private final BehaviorSubject<Integer> onZoomEventObservable = BehaviorSubject.create();
 
+    private final List<OnFirstLayoutListener> onFirstLayoutListeners = new ArrayList<>();
+    private boolean layoutOccurred = false;
+
     Projection projection;
-    private final PointF reuse = new PointF();
 
     public RxMapView(Context context) {
         super(context);
@@ -88,12 +95,22 @@ public class RxMapView extends ViewGroup {
         return onZoomEventObservable;
     }
 
+    public Projection getProjection() {
+        return projection;
+    }
+
     public float getRotation() {
         return rotation.getRotation();
     }
 
     public IGeoPoint getMapCenter() {
         return projection.fromPixels(getWidth() / 2, getHeight() / 2, null);
+    }
+
+    public void addOnFirstLayoutListener(OnFirstLayoutListener onFirstLayoutListener) {
+        if (!layoutOccurred) {
+            onFirstLayoutListeners.add(onFirstLayoutListener);
+        }
     }
 
     @Override
@@ -164,6 +181,13 @@ public class RxMapView extends ViewGroup {
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         pivot.set(getWidth() / 2, getHeight() / 2);
         computeProjection(true);
+        if (!layoutOccurred) {
+            layoutOccurred = true;
+            for (OnFirstLayoutListener listener : onFirstLayoutListeners) {
+                listener.onFirstLayout(changed, l, t, r, b);
+            }
+            onFirstLayoutListeners.clear();
+        }
     }
 
     @Override
@@ -277,6 +301,8 @@ public class RxMapView extends ViewGroup {
         @Override
         protected void onStartMotion() {
             scroller.stopScroll();
+            rotation.stopRotate();
+            zoom.stopZoom();
         }
 
         @Override
@@ -285,5 +311,9 @@ public class RxMapView extends ViewGroup {
             zoom.zoomIn();
             invalidate();
         }
+    }
+
+    public interface OnFirstLayoutListener {
+        void onFirstLayout(boolean changed, int l, int t, int r, int b);
     }
 }

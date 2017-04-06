@@ -53,7 +53,7 @@ class Axis {
         fixPosition();
         interpolator = LINEAR;
         this.duration = duration;
-        endPosition = clamp(endPosition + delta);
+        endPosition = clamp(startPosition + delta);
     }
 
     private void fixPosition() {

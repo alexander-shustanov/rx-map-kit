@@ -39,6 +39,10 @@ public class Rotation {
         this.rotation.setPosition(rotation);
     }
 
+    public void stopRotate() {
+        rotation.stopScroll();
+    }
+
     public boolean isFinished() {
         return rotation.isEnd();
     }
