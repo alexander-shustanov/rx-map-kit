@@ -45,11 +45,12 @@ public class RxMapView extends ViewGroup {
     private final PointF reuse = new PointF();
 
     private final PublishSubject<Projection> projectionSubject = PublishSubject.create();
-    private final OverlayManager overlayManager = new OverlayManager(projectionSubject, this);
     private final BehaviorSubject<ScrollEvent> scrollEventObservable = BehaviorSubject.create();
     private final BehaviorSubject<FlingEvent> flingEventObservable = BehaviorSubject.create();
     private final BehaviorSubject<Void> flingEndEventObservable = BehaviorSubject.create();
     private final BehaviorSubject<Integer> onZoomEventObservable = BehaviorSubject.create();
+
+    private final OverlayManager overlayManager = new OverlayManager(projectionSubject, this);
 
     private final List<OnFirstLayoutListener> onFirstLayoutListeners = new ArrayList<>();
     private boolean layoutOccurred = false;
@@ -111,6 +112,14 @@ public class RxMapView extends ViewGroup {
         if (!layoutOccurred) {
             onFirstLayoutListeners.add(onFirstLayoutListener);
         }
+    }
+
+    public float getMinZoom() {
+        return Zoom.MIN_ZOOM;
+    }
+
+    public float getMaxZoom() {
+        return Zoom.MAX_ZOOM;
     }
 
     @Override
@@ -235,6 +244,10 @@ public class RxMapView extends ViewGroup {
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         projectionSubject.onCompleted();
+        scrollEventObservable.onCompleted();
+        flingEndEventObservable.onCompleted();
+        flingEndEventObservable.onCompleted();
+        onZoomEventObservable.onCompleted();
         overlayManager.detach();
         touchScroller.detach();
     }

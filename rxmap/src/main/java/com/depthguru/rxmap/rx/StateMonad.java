@@ -46,6 +46,8 @@ public class StateMonad<T, R, S> implements Observable.Operator<R, T> {
             this.child = child;
             this.func = func;
             this.state = initialState;
+
+            child.add(this);
         }
 
         @Override

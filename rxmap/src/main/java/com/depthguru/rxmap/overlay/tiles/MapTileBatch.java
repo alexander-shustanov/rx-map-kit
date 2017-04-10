@@ -18,7 +18,7 @@ import java.util.Map;
  * </p>
  * alexander.shustanov on 16.12.16
  */
-class MapTileBatch {
+public class MapTileBatch {
 
     private final Map<MapTile, TileDrawable> tiles = new HashMap<>();
     private final Projection projection;
@@ -26,7 +26,7 @@ class MapTileBatch {
 
     private Rect tilesRect = new Rect(Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE);
 
-    MapTileBatch(Map<MapTile, Drawable> tiles, Collection<MapTile> mapTiles, Projection projection) {
+    public MapTileBatch(Map<MapTile, Drawable> tiles, Collection<MapTile> mapTiles, Projection projection) {
 
         for (MapTile mapTile : tiles.keySet()) {
             this.tiles.put(mapTile, new TileDrawable(mapTile, tiles.get(mapTile), projection.getDiscreteZoom()));
