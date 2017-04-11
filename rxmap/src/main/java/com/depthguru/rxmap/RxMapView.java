@@ -188,7 +188,16 @@ public class RxMapView extends ViewGroup {
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        pivot.set(getWidth() / 2, getHeight() / 2);
+        int pivotX = getWidth() / 2;
+        int pivotY = getHeight() / 2;
+        float dx = pivotX - pivot.x;
+        float dy = pivotY - pivot.y;
+
+        projection.unRotateAndScaleVector(dx, dy, reuse);
+        scroller.scrollTo(scroller.getCurrX() - reuse.x, scroller.getCurrY() - reuse.y);
+        updatePivot(pivotX, pivotY);
+
+        scrollTo(scroller.getCurrX(), scroller.getCurrY());
         computeProjection(true);
         if (!layoutOccurred) {
             layoutOccurred = true;

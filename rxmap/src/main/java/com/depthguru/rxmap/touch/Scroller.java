@@ -19,7 +19,7 @@ public class Scroller {
         setZoom(zoom);
     }
 
-    public void scrollTo(int x, int y) {
+    public void scrollTo(float x, float y) {
         this.x.setPosition(x);
         this.y.setPosition(y);
     }
