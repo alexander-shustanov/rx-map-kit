@@ -55,6 +55,7 @@ public class MapTileProviderArray extends MapTileProviderBase {
     protected Observable<MapTileBatch> processTiles(Observable<Pair<Projection, Collection<MapTile>>> projectionWithTiles) {
         Observable<?> updateCache =
                 loadedTiles
+                        .onBackpressureDrop()
                         .buffer(100, TimeUnit.MILLISECONDS, 10)
                         .filter(list -> !list.isEmpty())
                         .onBackpressureBuffer()
