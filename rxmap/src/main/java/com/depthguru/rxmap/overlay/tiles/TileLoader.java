@@ -2,7 +2,10 @@ package com.depthguru.rxmap.overlay.tiles;
 
 import com.depthguru.rxmap.rx.MapSchedulers;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -28,6 +31,8 @@ public class TileLoader extends Thread {
     private final LinkedBlockingQueue<Runnable> workQueue;
     private final Object monitor = new Object();
 
+    private final Set<MapTile> inLoading = Collections.synchronizedSet(new HashSet<>());
+
     private boolean inProcess = true;
 
     /**
@@ -41,21 +46,18 @@ public class TileLoader extends Thread {
 
         Subscription subscription = loadResultConveyor
                 .filter(mapTileState -> mapTileState.getDrawable() != null || modules.size() <= mapTileState.getState())
-                .onBackpressureDrop(loadResultConveyor::onNext)
+                .onBackpressureDrop(mapTileState -> inLoading.remove(mapTileState.getMapTile()))
                 .subscribe(successLoadedObserver);
         this.subscription.add(subscription);
 
         subscription = loadResultConveyor
                 .filter(mapTileState -> mapTileState.getDrawable() == null && modules.size() > mapTileState.getState())
-                .onBackpressureDrop(mapTileState -> {
-                    mapTileState.incState();
-                    loadResultConveyor.onNext(mapTileState);
-                })
+                .onBackpressureDrop(mapTileState -> inLoading.remove(mapTileState.getMapTile()))
                 .observeOn(MapSchedulers.tilesScheduler())
                 .subscribe(mapTileState -> {
                     if (!schedule(mapTileState)) {
                         mapTileState.skip();
-                        loadResultConveyor.onNext(mapTileState);
+                        inLoading.remove(mapTileState.getMapTile());
                     }
                 });
         this.subscription.add(subscription);
@@ -69,7 +71,13 @@ public class TileLoader extends Thread {
      * @param mapTileState
      */
     public boolean schedule(MapTileState mapTileState) {
-        return queue.offer(mapTileState);
+        synchronized (inLoading) {
+            if (queue.offer(mapTileState)) {
+                inLoading.add(mapTileState.getMapTile());
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

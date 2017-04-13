@@ -10,6 +10,7 @@ import com.depthguru.rxmap.TileSystem;
 import com.depthguru.rxmap.rx.MapSchedulers;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -33,8 +34,6 @@ public class MapTileProviderArray extends MapTileProviderBase {
 
     private final TileCache tileCache;
     private final TileLoader loader;
-
-    private final Set<MapTile> inLoading = new HashSet<>();
 
     private final PublishSubject<MapTileState> loadedTiles = PublishSubject.create();
 
@@ -63,7 +62,6 @@ public class MapTileProviderArray extends MapTileProviderBase {
                         .doOnNext(mapTileStates -> {
                             for (MapTileState mapTileState : mapTileStates) {
                                 tileCache.put(mapTileState.getMapTile(), mapTileState.getDrawable());
-                                inLoading.remove(mapTileState.getMapTile());
                             }
                         });
 
@@ -83,9 +81,7 @@ public class MapTileProviderArray extends MapTileProviderBase {
                                 if (drawable != null) {
                                     tiles.put(mapTile, drawable);
                                 } else {
-                                    if (!inLoading.contains(mapTile) && loader.schedule(new MapTileState(mapTile))) {
-                                        inLoading.add(mapTile);
-                                    }
+                                    loader.schedule(new MapTileState(mapTile));
                                 }
                             }
                             return new MapTileBatch(tiles, mapTiles, projection);
