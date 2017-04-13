@@ -32,24 +32,26 @@ class Axis {
 
     private double fullValue = Double.MAX_VALUE;
 
-    Axis(float initialPosition) {
+    Axis(double initialPosition) {
         startPosition = initialPosition;
         currentPosition = initialPosition;
         endPosition = initialPosition;
         checkFullValue();
     }
 
-    Axis(float initialPosition, double minValue, double maxValue) {
-        this(initialPosition);
+    void setMinValue(double minValue) {
         this.minValue = minValue;
+    }
+
+    void setMaxValue(double maxValue) {
         this.maxValue = maxValue;
     }
 
-    void scrollBy(float delta) {
+    void scrollBy(double delta) {
         scrollBy(delta, 20);
     }
 
-    void scrollBy(float delta, int duration) {
+    void scrollBy(double delta, int duration) {
         fixPosition();
         interpolator = LINEAR;
         this.duration = duration;
@@ -107,7 +109,7 @@ class Axis {
         if (delta >= duration) {
             return 1f;
         }
-        return interpolator.getInterpolation(((float) delta) / ((float) duration));
+        return interpolator.getInterpolation(delta / (float) duration);
     }
 
     boolean isEnd() {
@@ -118,7 +120,7 @@ class Axis {
         return velocity != 0;
     }
 
-    void fling(float velocity, int duration, float tension) {
+    void fling(double velocity, int duration, double tension) {
         fixPosition();
         endPosition = clamp(startPosition - velocity * duration / 2f);
         this.velocity = velocity;
@@ -127,14 +129,14 @@ class Axis {
         interpolator = LINEAR;
     }
 
-    void offsetBy(float offset) {
+    void offsetBy(double offset) {
         startPosition = clamp(startPosition + offset);
         endPosition = clamp(endPosition + offset);
         currentPosition = clamp(currentPosition + offset);
         checkFullValue();
     }
 
-    void reconfigureWithZoomFactor(float scaleFactor, float pivot) {
+    void reconfigureWithZoomFactor(double scaleFactor, double pivot) {
         this.startPosition += pivot;
         this.endPosition += pivot;
         this.currentPosition += pivot;
@@ -176,7 +178,7 @@ class Axis {
         return value;
     }
 
-    void setPosition(float pos) {
+    void setPosition(double pos) {
         tension = 0.0;
         velocity = 0.0;
         startTime = AnimationUtils.currentAnimationTimeMillis();

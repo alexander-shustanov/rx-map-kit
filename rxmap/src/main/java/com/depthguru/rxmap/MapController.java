@@ -66,6 +66,11 @@ public class MapController {
         rxMapView.invalidate();
     }
 
+    public void zoomTo(float zoom) {
+        rxMapView.zoom.zoomTo(zoom);
+        rxMapView.invalidate();
+    }
+
     public void zoomIn() {
         rxMapView.zoom.zoomIn();
         rxMapView.invalidate();
