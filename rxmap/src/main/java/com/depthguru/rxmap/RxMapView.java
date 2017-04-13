@@ -114,14 +114,6 @@ public class RxMapView extends ViewGroup {
         }
     }
 
-    public float getMinZoom() {
-        return Zoom.MIN_ZOOM;
-    }
-
-    public float getMaxZoom() {
-        return Zoom.MAX_ZOOM;
-    }
-
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         return touchScroller.onTouchEvent(event);
@@ -224,6 +216,22 @@ public class RxMapView extends ViewGroup {
 
     public int getDiscreteZoom() {
         return zoom.getDiscreteZoom();
+    }
+
+    public float getMinZoom() {
+        return zoom.getMinZoom();
+    }
+
+    public float getMaxZoom() {
+        return zoom.getMaxZoom();
+    }
+
+    public void setMinZoom(float minZoom) {
+        zoom.setMinZoom(minZoom);
+    }
+
+    public void setMaxZoom(float maxZoom) {
+        zoom.setMaxZoom(maxZoom);
     }
 
     public OverlayManager getOverlayManager() {
