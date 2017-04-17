@@ -56,6 +56,7 @@ public class RxMapView extends ViewGroup {
     private boolean layoutOccurred = false;
 
     Projection projection;
+    boolean multiTouch = true;
 
     public RxMapView(Context context) {
         super(context);
@@ -269,6 +270,10 @@ public class RxMapView extends ViewGroup {
         touchScroller.detach();
     }
 
+    public void setMultiTouch(boolean multiTouch) {
+        this.multiTouch = multiTouch;
+    }
+
     public void setTilesScaledToDpi(boolean tilesScaledToDpi) {
         if (tilesScaledToDpi) {
             float density = Math.max(getResources().getDisplayMetrics().density, 1f);
@@ -308,6 +313,9 @@ public class RxMapView extends ViewGroup {
 
         @Override
         protected void onZoom(float zoom, PointF pivot) {
+            if (!multiTouch) {
+                return;
+            }
             int zoomDiff = RxMapView.this.zoom.add(zoom);
             int endZoom = RxMapView.this.zoom.getDiscreteZoom();
             computeProjection(false);
@@ -322,6 +330,9 @@ public class RxMapView extends ViewGroup {
 
         @Override
         protected void onRotate(float rotation, PointF pivot) {
+            if (!multiTouch) {
+                return;
+            }
             RxMapView.this.rotation.add(rotation);
             computeProjection(false);
             invalidate();
