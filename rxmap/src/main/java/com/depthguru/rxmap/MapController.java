@@ -59,8 +59,10 @@ public class MapController {
     public void setZoom(float zoom) {
         int zoomDiff = rxMapView.zoom.setZoom(zoom);
         if (zoomDiff != 0) {
-            rxMapView.scroller.setZoom(rxMapView.zoom.getDiscreteZoom());
-            rxMapView.scroller.reconfigureWithZoomFactor(zoomDiff, rxMapView.getWidth() / 2, rxMapView.getHeight() / 2);
+            rxMapView.scroller.reconfigureWithZoomFactor(
+                    rxMapView.zoom.getDiscreteZoom(),
+                    rxMapView.getWidth() / 2, rxMapView.getHeight() / 2
+            );
         }
         rxMapView.computeProjection(true);
         rxMapView.invalidate();

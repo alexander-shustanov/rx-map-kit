@@ -1,5 +1,7 @@
 package com.depthguru.rxmap.touch;
 
+import rx.subjects.BehaviorSubject;
+
 /**
  * Zoom
  * </p>
@@ -14,10 +16,20 @@ public class Zoom {
     private float maxZoom = 18f;
     private int ANIMATION_DURATION = 250;
 
+    private final BehaviorSubject<Integer> onZoomEventObservable = BehaviorSubject.create();
+
     public Zoom(float initialZoom) {
         z = new Axis(initialZoom);
         z.setMinValue(minZoom);
         z.setMaxValue(maxZoom);
+    }
+
+    public BehaviorSubject<Integer> getOnZoomEventObservable() {
+        return onZoomEventObservable;
+    }
+
+    public void detach() {
+        onZoomEventObservable.onCompleted();
     }
 
     public float getMinZoom() {
@@ -49,7 +61,12 @@ public class Zoom {
     public boolean computeZoomOffset() {
         boolean inProcess = !isFinished();
         if (inProcess) {
+            int startZoom = getDiscreteZoom();
             z.computeCurrentValue();
+            int endZoom = getDiscreteZoom();
+            if (endZoom - startZoom != 0) {
+                onZoomEventObservable.onNext(endZoom);
+            }
         }
         return inProcess;
     }
@@ -62,7 +79,11 @@ public class Zoom {
         int startZoom = getDiscreteZoom();
         z.setPosition(zoom);
         int endZoom = getDiscreteZoom();
-        return endZoom - startZoom;
+        int zoomDiff = endZoom - startZoom;
+        if (zoomDiff != 0) {
+            onZoomEventObservable.onNext(endZoom);
+        }
+        return zoomDiff;
     }
 
     public float getScaleFactor() {

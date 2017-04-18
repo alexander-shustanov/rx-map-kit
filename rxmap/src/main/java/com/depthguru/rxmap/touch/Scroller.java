@@ -13,10 +13,13 @@ public class Scroller {
     private final Axis x;
     private final Axis y;
 
+    private int zoom;
+
     public Scroller(int x, int y, int zoom) {
         this.x = new Axis(x);
         this.y = new Axis(y);
-        setZoom(zoom);
+        this.zoom = zoom;
+        updateWorldSize(zoom);
     }
 
     public void scrollTo(float x, float y) {
@@ -79,13 +82,21 @@ public class Scroller {
         y.stopScroll();
     }
 
-    public void reconfigureWithZoomFactor(int zoomDiff, float pivotX, float pivotY) {
+    public void reconfigureWithZoomFactor(int newZoom, float pivotX, float pivotY) {
+        int zoomDiff = newZoom - zoom;
+        if (zoomDiff == 0) {
+            return;
+        }
+
+        updateWorldSize(newZoom);
+
         float scaleFactor = (float) Math.pow(2, zoomDiff);
         x.reconfigureWithZoomFactor(scaleFactor, pivotX);
         y.reconfigureWithZoomFactor(scaleFactor, pivotY);
+        zoom = newZoom;
     }
 
-    public void setZoom(int zoom) {
+    public void updateWorldSize(int zoom) {
         final int worldSize = TileSystem.MapSize(zoom);
         x.setFullValue(worldSize);
         y.setFullValue(worldSize);

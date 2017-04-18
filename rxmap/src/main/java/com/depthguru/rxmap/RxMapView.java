@@ -42,13 +42,13 @@ public class RxMapView extends ViewGroup {
     final Rotation rotation = new Rotation();
 
     private final TouchScroller touchScroller;
+    private final MapController controller = new MapController(this);
     private final PointF reuse = new PointF();
 
     private final PublishSubject<Projection> projectionSubject = PublishSubject.create();
     private final BehaviorSubject<ScrollEvent> scrollEventObservable = BehaviorSubject.create();
     private final BehaviorSubject<FlingEvent> flingEventObservable = BehaviorSubject.create();
     private final BehaviorSubject<Void> flingEndEventObservable = BehaviorSubject.create();
-    private final BehaviorSubject<Integer> onZoomEventObservable = BehaviorSubject.create();
 
     private final OverlayManager overlayManager = new OverlayManager(projectionSubject, this);
 
@@ -77,6 +77,10 @@ public class RxMapView extends ViewGroup {
         computeProjection(true);
     }
 
+    public MapController getController() {
+        return controller;
+    }
+
     public Observable<Projection> getProjectionObservable() {
         return projectionSubject;
     }
@@ -94,7 +98,7 @@ public class RxMapView extends ViewGroup {
     }
 
     public Observable<Integer> getOnZoomEventObservable() {
-        return onZoomEventObservable;
+        return zoom.getOnZoomEventObservable();
     }
 
     public Projection getProjection() {
@@ -140,8 +144,7 @@ public class RxMapView extends ViewGroup {
             }
 
             if (zoomDiff != 0) {
-                scroller.setZoom(endZoom);
-                scroller.reconfigureWithZoomFactor(zoomDiff, pivot.x, pivot.y);
+                scroller.reconfigureWithZoomFactor(endZoom, pivot.x, pivot.y);
             } else {
                 postInvalidate();
             }
@@ -265,7 +268,7 @@ public class RxMapView extends ViewGroup {
         scrollEventObservable.onCompleted();
         flingEndEventObservable.onCompleted();
         flingEndEventObservable.onCompleted();
-        onZoomEventObservable.onCompleted();
+        zoom.detach();
         overlayManager.detach();
         touchScroller.detach();
     }
@@ -281,7 +284,7 @@ public class RxMapView extends ViewGroup {
         } else {
             TileSystem.restoreTileSize();
         }
-        scroller.setZoom(zoom.getDiscreteZoom());
+        scroller.updateWorldSize(zoom.getDiscreteZoom());
     }
 
     @Override
@@ -322,9 +325,7 @@ public class RxMapView extends ViewGroup {
             updatePivot(pivot.x, pivot.y);
 
             if (zoomDiff != 0) {
-                scroller.setZoom(endZoom);
-                scroller.reconfigureWithZoomFactor(zoomDiff, pivot.x, pivot.y);
-                onZoomEventObservable.onNext(endZoom);
+                scroller.reconfigureWithZoomFactor(endZoom, pivot.x, pivot.y);
             }
         }
 
