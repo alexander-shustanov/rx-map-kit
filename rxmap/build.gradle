@@ -29,7 +29,7 @@ android {
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile 'io.reactivex:rxjava:1.2.0'
+    compile 'io.reactivex:rxjava:1.2.9'
     compile 'io.reactivex:rxandroid:1.2.0'
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'

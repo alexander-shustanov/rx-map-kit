@@ -95,7 +95,11 @@ public class Projection {
     }
 
     public Point toPixels(IGeoPoint geoPoint, Point reuse) {
-        Point point = TileSystem.LatLongToPixelXY(geoPoint.getLatitude(), geoPoint.getLongitude(), discreteZoom, reuse);
+        return toPixels(geoPoint.getLatitude(), geoPoint.getLongitude(), reuse);
+    }
+
+    public Point toPixels(double latitude, double longitude, Point reuse) {
+        Point point = TileSystem.LatLongToPixelXY(latitude, longitude, discreteZoom, reuse);
         point.offset(offsetX, offsetY);
         return point;
     }
