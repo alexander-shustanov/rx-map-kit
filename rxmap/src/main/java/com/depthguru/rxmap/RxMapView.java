@@ -334,9 +334,8 @@ public class RxMapView extends ViewGroup {
             if (!multiTouch) {
                 return;
             }
-            RxMapView.this.rotation.add(rotation);
+            RxMapView.this.rotation.setRotation(RxMapView.this.rotation.getRotation() + rotation);
             computeProjection(false);
-            invalidate();
             updatePivot(pivot.x, pivot.y);
         }
 
