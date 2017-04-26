@@ -136,19 +136,20 @@ public class TouchState {
         velocityTracker.recycle();
     }
 
-    public boolean inZoom() {
+    public boolean inZoomOrRotate() {
         return state == State.ZOOM || state == State.ROTATE;
     }
 
-    public float computeZoom(MotionEvent event, PointF reuse) {
+    public void computeCenterPivot(MotionEvent event, PointF reuse) {
         reuse.x = (event.getX(0) + event.getX(1)) / 2f;
         reuse.y = (event.getY(0) + event.getY(1)) / 2f;
+    }
+
+    public float computeZoom(MotionEvent event) {
         return (float) (Math.log(computeFingerDistance(event) / fingersDistance) / LOG2);
     }
 
-    public float computeRotation(MotionEvent event, PointF reuse) {
-        reuse.x = (event.getX(0) + event.getX(1)) / 2f;
-        reuse.y = (event.getY(0) + event.getY(1)) / 2f;
+    public float computeRotation(MotionEvent event) {
         float rotation = rotation(event);
         float delta = rotation - initialRotation;
         initialRotation += delta;

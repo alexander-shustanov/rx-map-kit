@@ -315,26 +315,17 @@ public class RxMapView extends ViewGroup {
         }
 
         @Override
-        protected void onZoom(float zoom, PointF pivot) {
+        protected void onZoomAndRotate(float zoom, float rotation, PointF pivot) {
             if (!multiTouch) {
                 return;
             }
             int zoomDiff = RxMapView.this.zoom.add(zoom);
             int endZoom = RxMapView.this.zoom.getDiscreteZoom();
-            computeProjection(false);
-            updatePivot(pivot.x, pivot.y);
-
             if (zoomDiff != 0) {
                 scroller.reconfigureWithZoomFactor(endZoom, pivot.x, pivot.y);
             }
-        }
-
-        @Override
-        protected void onRotate(float rotation, PointF pivot) {
-            if (!multiTouch) {
-                return;
-            }
             RxMapView.this.rotation.setRotation(RxMapView.this.rotation.getRotation() + rotation);
+
             computeProjection(false);
             updatePivot(pivot.x, pivot.y);
         }

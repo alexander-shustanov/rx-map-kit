@@ -120,30 +120,23 @@ public abstract class TouchScroller {
                 state.computeScroll(event, reuse);
                 performScroll(reuse);
             }
-            if (state.inZoom()) {
-                float zoom = state.computeZoom(event, reuse);
-                float rotation = state.computeRotation(event, reuse);
-                performZoom(zoom, reuse);
-                performRotate(rotation, reuse);
+            if (state.inZoomOrRotate()) {
+                float zoom = state.computeZoom(event);
+                float rotation = state.computeRotation(event);
+                state.computeCenterPivot(event, reuse);
+                performZoomAndRotate(zoom, rotation, reuse);
             }
         }
     }
 
-    private void performZoom(float zoom, PointF pivot) {
-        onZoom(zoom, pivot);
-    }
-
-    private void performRotate(float rotation, PointF pivot) {
-        onRotate(rotation, pivot);
+    private void performZoomAndRotate(float zoom, float rotation, PointF pivot) {
+        onZoomAndRotate(zoom, rotation, pivot);
     }
 
     protected void onStartMotion() {
     }
 
-    protected void onZoom(float zoom, PointF pivot) {
-    }
-
-    protected void onRotate(float rotation, PointF pivot) {
+    protected void onZoomAndRotate(float zoom, float rotation, PointF pivot) {
     }
 
     private void performScroll(PointF scrollOffset) {
