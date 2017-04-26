@@ -15,12 +15,14 @@ import com.depthguru.rxmap.overlay.Drawer;
 class ItemizedOverlayDrawer<T, D> extends Drawer {
     private ItemsBatch<T, D> batch;
     private final int minZoom, maxZoom;
+    private final boolean rotate;
 
-    public ItemizedOverlayDrawer(Projection baseProjection, ItemsBatch<T, D> batch, int minZoom, int maxZoom) {
+    public ItemizedOverlayDrawer(Projection baseProjection, ItemsBatch<T, D> batch, int minZoom, int maxZoom, boolean rotate) {
         super(baseProjection);
         this.batch = batch;
         this.minZoom = minZoom;
         this.maxZoom = maxZoom;
+        this.rotate = rotate;
     }
 
     @Override
@@ -70,8 +72,17 @@ class ItemizedOverlayDrawer<T, D> extends Drawer {
             int halfWidth = (int) (icon.getIntrinsicWidth() / 2 / projection.getScaleFactor());
             int halfHeight = (int) (icon.getIntrinsicHeight() / 2 / projection.getScaleFactor());
             if (!canvas.quickReject(x - halfWidth, y - halfHeight, x + halfWidth, y + halfHeight, Canvas.EdgeType.BW)) {
+                if (rotate) {
+                    canvas.save();
+                    canvas.rotate(-projection.getMapOrientation(), x, y);
+                }
+
                 icon.setBounds(x - halfWidth, y - halfHeight, x + halfWidth, y + halfHeight);
                 icon.draw(canvas);
+
+                if (rotate) {
+                    canvas.restore();
+                }
             }
         }
         canvas.restore();

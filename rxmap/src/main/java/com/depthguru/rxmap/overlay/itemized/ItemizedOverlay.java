@@ -10,13 +10,20 @@ import com.depthguru.rxmap.overlay.Overlay;
  */
 public class ItemizedOverlay<T,D> extends Overlay<ItemsBatch<T,D>> {
 
+    private final boolean rotate;
+
     public ItemizedOverlay(ItemizedDataProvider<T,D> dataProvider) {
+        this(dataProvider, false);
+    }
+
+    public ItemizedOverlay(ItemizedDataProvider<T,D> dataProvider, boolean rotate) {
         super(dataProvider);
+        this.rotate = rotate;
     }
 
     @Override
     protected Drawer createDrawer(ItemsBatch<T,D> itemsBatch) {
-        return new ItemizedOverlayDrawer<T, D>(itemsBatch.getProjection(), itemsBatch, getMinZoom(), getMaxZoom());
+        return new ItemizedOverlayDrawer<>(itemsBatch.getProjection(), itemsBatch, getMinZoom(), getMaxZoom(), rotate);
     }
 
     @Override

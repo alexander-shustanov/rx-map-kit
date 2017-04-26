@@ -16,7 +16,7 @@ public class TileCache {
     private final int maxSize;
     private final Map<MapTile, Item> tiles = new HashMap<>();
     private final SparseArray<MapTile> lastUse = new SparseArray<>();
-    private int i = 0;
+    int i = 0;
 
     public TileCache(int maxSize) {
         this.maxSize = maxSize;
