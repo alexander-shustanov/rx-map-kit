@@ -1,7 +1,5 @@
 package com.depthguru.rxmap.overlay.tiles;
 
-import com.depthguru.rxmap.rx.MapSchedulers;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -46,14 +44,14 @@ public class TileLoader extends Thread {
 
         Subscription subscription = loadResultConveyor
                 .filter(mapTileState -> mapTileState.getDrawable() != null || modules.size() <= mapTileState.getState())
-                .onBackpressureDrop(mapTileState -> inLoading.remove(mapTileState.getMapTile()))
+                .doOnNext(mapTileState -> inLoading.remove(mapTileState.getMapTile()))
+                .onBackpressureDrop()
                 .subscribe(successLoadedObserver);
         this.subscription.add(subscription);
 
         subscription = loadResultConveyor
                 .filter(mapTileState -> mapTileState.getDrawable() == null && modules.size() > mapTileState.getState())
                 .onBackpressureDrop(mapTileState -> inLoading.remove(mapTileState.getMapTile()))
-                .observeOn(MapSchedulers.tilesScheduler())
                 .subscribe(mapTileState -> {
                     if (!schedule(mapTileState)) {
                         mapTileState.skip();

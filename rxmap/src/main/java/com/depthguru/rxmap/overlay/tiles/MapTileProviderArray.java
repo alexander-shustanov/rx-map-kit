@@ -10,11 +10,8 @@ import com.depthguru.rxmap.TileSystem;
 import com.depthguru.rxmap.rx.MapSchedulers;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import rx.Observable;
@@ -58,7 +55,7 @@ public class MapTileProviderArray extends MapTileProviderBase {
                         .onBackpressureDrop()
                         .buffer(100, TimeUnit.MILLISECONDS, 10)
                         .filter(list -> !list.isEmpty())
-                        .onBackpressureBuffer()
+                        .onBackpressureDrop()
                         .observeOn(MapSchedulers.tilesScheduler())
                         .doOnNext(mapTileStates -> {
                             for (MapTileState mapTileState : mapTileStates) {

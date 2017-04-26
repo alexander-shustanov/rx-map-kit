@@ -50,10 +50,12 @@ public class OverlayManager {
         Observable<Projection> projectionObservable = this.projectionObservable
                 .compose(SingleItemBuffer.dropOldest())
                 .observeOn(MapSchedulers.overlayScheduler());
+
         for (Overlay overlay : overlays) {
             drawerObservables.add(projectionObservable
                     .compose(overlay::createDrawer));
         }
+
         drawersSubscription = combineLatest(drawerObservables, args -> args)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(objects -> {
