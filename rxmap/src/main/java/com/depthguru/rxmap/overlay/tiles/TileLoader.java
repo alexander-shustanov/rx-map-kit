@@ -1,124 +1,97 @@
 package com.depthguru.rxmap.overlay.tiles;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
+import android.util.DisplayMetrics;
 
-import rx.Observer;
-import rx.Subscription;
-import rx.subjects.PublishSubject;
-import rx.subscriptions.CompositeSubscription;
+import com.depthguru.rxmap.Projection;
+import com.depthguru.rxmap.TileSystem;
+import com.depthguru.rxmap.rx.MapSchedulers;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+
+import rx.Observable;
 
 /**
  * TileLoader
  * </p>
  * alexander.shustanov on 19.12.16
  */
-public class TileLoader extends Thread {
-    private final CompositeSubscription subscription = new CompositeSubscription();
-    private final BlockingQueue<MapTileState> queue = new LinkedBlockingQueue<>(4);
-    private final PublishSubject<MapTileState> loadResultConveyor = PublishSubject.create();
+public class TileLoader {
     private final List<MapTileProviderModule> modules;
-    private final ExecutorService executor;
-    private final LinkedBlockingQueue<Runnable> workQueue;
-    private final Object monitor = new Object();
+    private final TileCache tileCache;
+    private final int cacheSize;
 
-    private final Set<MapTile> inLoading = Collections.synchronizedSet(new HashSet<>());
-
-    private boolean inProcess = true;
 
     /**
-     * @param modules               List of modules sorted by priority
-     * @param successLoadedObserver observer observing success loadede tiles
+     * @param modules List of modules sorted by priority
      */
-    public TileLoader(List<MapTileProviderModule> modules, Observer<MapTileState> successLoadedObserver) {
+    public TileLoader(List<MapTileProviderModule> modules) {
         this.modules = modules;
-        workQueue = new LinkedBlockingQueue<>(4);
-        executor = new ThreadPoolExecutor(2, 2, 5, TimeUnit.SECONDS, workQueue);
 
-        Subscription subscription = loadResultConveyor
-                .filter(mapTileState -> mapTileState.getDrawable() != null || modules.size() <= mapTileState.getState())
-                .doOnNext(mapTileState -> inLoading.remove(mapTileState.getMapTile()))
-                .onBackpressureDrop()
-                .subscribe(successLoadedObserver);
-        this.subscription.add(subscription);
+        DisplayMetrics displayMetrics = Resources.getSystem().getDisplayMetrics();
+        int heightPixels = displayMetrics.heightPixels;
+        int widthPixels = displayMetrics.widthPixels;
+        int tileSize = TileSystem.getTileSize();
 
-        subscription = loadResultConveyor
-                .filter(mapTileState -> mapTileState.getDrawable() == null && modules.size() > mapTileState.getState())
-                .onBackpressureDrop(mapTileState -> inLoading.remove(mapTileState.getMapTile()))
-                .subscribe(mapTileState -> {
-                    if (!schedule(mapTileState)) {
-                        mapTileState.skip();
-                        inLoading.remove(mapTileState.getMapTile());
-                    }
-                });
-        this.subscription.add(subscription);
+        int tilesPerWidth = (int) Math.ceil(Math.sqrt(2) * widthPixels / (double) tileSize) + 2;
+        int tilesPerHeight = (int) Math.ceil(Math.sqrt(2) * heightPixels / (double) tileSize) + 2;
+        cacheSize = tilesPerWidth * tilesPerHeight;
 
-        start();
-    }
-
-    /**
-     * Schedules tile loading
-     *
-     * @param mapTileState
-     */
-    public boolean schedule(MapTileState mapTileState) {
-        synchronized (inLoading) {
-            if (queue.offer(mapTileState)) {
-                inLoading.add(mapTileState.getMapTile());
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public void run() {
-        while (inProcess) {
-            MapTileState mapTileState;
-            try {
-                while (queue.size() > 4) {
-                    mapTileState = queue.take();
-                    mapTileState.skip();
-                    loadResultConveyor.onNext(mapTileState);
-                }
-                mapTileState = queue.take();
-
-            } catch (InterruptedException e) {
-                return;
-            }
-
-            synchronized (monitor) {
-                while (workQueue.remainingCapacity() == 0) {
-                    try {
-                        monitor.wait();
-                    } catch (InterruptedException e) {
-                        return;
-                    }
-                }
-            }
-
-            int state = mapTileState.getState();
-            if (modules.size() > state) {
-                MapTileProviderModule module = modules.get(state);
-                executor.submit(module.process(mapTileState, loadResultConveyor, monitor));
-            }
-        }
+        tileCache = new TileCache(cacheSize);
     }
 
     /**
      * Clear resources such as threads and subscriptions
      */
     public void detach() {
-        loadResultConveyor.onCompleted();
-        subscription.unsubscribe();
-        inProcess = false;
-        interrupt();
+
+    }
+
+    public Observable<TileDrawable> load(Collection<MapTile> mapTiles, Projection projection) {
+        return Observable.<TileDrawable>create(subscriber -> {
+            int discreteZoom = projection.getDiscreteZoom();
+
+            List<MapTile> toLoad = new ArrayList<>();
+
+            for (MapTile mapTile : mapTiles) {
+                Drawable tile = tileCache.get(mapTile);
+                if (subscriber.isUnsubscribed()) {
+                    subscriber.onCompleted();
+                    return;
+                }
+                if (tile != null) {
+                    subscriber.onNext(new TileDrawable(mapTile, tile, discreteZoom));
+                } else {
+                    toLoad.add(mapTile);
+                }
+            }
+
+            if (toLoad.isEmpty() || modules.isEmpty()) {
+                subscriber.onCompleted();
+                return;
+            }
+
+            Iterator<MapTile> mapTileIterator = toLoad.iterator();
+            do {
+                MapTile tile = mapTileIterator.next();
+                Iterator<MapTileProviderModule> moduleIterator = modules.iterator();
+
+                do {
+                    Drawable drawable = moduleIterator.next().process(tile);
+                    if (drawable != null) {
+                        tileCache.put(tile, drawable);
+                        subscriber.onNext(new TileDrawable(tile, drawable, discreteZoom));
+                        break;
+                    }
+                } while (moduleIterator.hasNext() && !subscriber.isUnsubscribed());
+
+            } while (mapTileIterator.hasNext() && !subscriber.isUnsubscribed());
+
+            subscriber.onCompleted();
+        }).subscribeOn(MapSchedulers.tilesScheduler());
     }
 }

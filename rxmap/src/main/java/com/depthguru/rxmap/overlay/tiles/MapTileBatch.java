@@ -1,10 +1,9 @@
 package com.depthguru.rxmap.overlay.tiles;
 
 import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
 
-import com.depthguru.rxmap.util.MathUtils;
 import com.depthguru.rxmap.Projection;
+import com.depthguru.rxmap.util.MathUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,10 +25,10 @@ public class MapTileBatch {
 
     private Rect tilesRect = new Rect(Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE);
 
-    public MapTileBatch(Map<MapTile, Drawable> tiles, Collection<MapTile> mapTiles, Projection projection) {
+    public MapTileBatch(ArrayList<TileDrawable> tiles, Collection<MapTile> mapTiles, Projection projection) {
 
-        for (MapTile mapTile : tiles.keySet()) {
-            this.tiles.put(mapTile, new TileDrawable(mapTile, tiles.get(mapTile), projection.getDiscreteZoom()));
+        for (TileDrawable tile : tiles) {
+            this.tiles.put(tile.mapTile, tile);
         }
 
         this.mapTiles = new ArrayList<>(mapTiles);
@@ -79,7 +78,7 @@ public class MapTileBatch {
         for (MapTile mapTile : last.getMapTiles()) {
 
             TileDrawable tile = last.getTile(mapTile);
-            if(tile == null) {
+            if (tile == null) {
                 continue;
             }
 

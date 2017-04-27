@@ -4,13 +4,11 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
-import android.os.Build;
+import android.graphics.drawable.Drawable;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
 import java.io.File;
-
-import rx.Observer;
 
 /**
  * FileStorageProviderModule
@@ -33,26 +31,18 @@ public class FileStorageProviderModule extends MapTileProviderModule {
     }
 
     @Override
-    protected LoadTask createTask(MapTileState mapTileState, Observer<MapTileState> loadSorter) {
-        return new LoadTask() {
-            @Override
-            protected void load() {
-                Log.i("FileStorageProviderMod", "Start load " + mapTileState.getMapTile());
-                MapTile mapTile = mapTileState.getMapTile();
-                File file = new File(context.getCacheDir(), String.format("%s/%s/%s.png", mapTile.getZoomLevel(), mapTile.getX(), mapTile.getY()));
+    public Drawable process(MapTile mapTile) {
+        Log.i("FileStorageProviderMod", "Start load " + mapTile);
+        File file = new File(context.getCacheDir(), String.format("%s/%s/%s.png", mapTile.getZoomLevel(), mapTile.getX(), mapTile.getY()));
 
-                try {
-                    if (file.exists()) {
-                        Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath(), opts);
-                        mapTileState.setDrawable(new BitmapDrawable(context.getResources(), bitmap));
-                    }
-                } finally {
-                    if (mapTileState.getDrawable() == null) {
-                        mapTileState.incState();
-                    }
-                    loadSorter.onNext(mapTileState);
-                }
+        try {
+            if (file.exists()) {
+                Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath(), opts);
+                return new BitmapDrawable(context.getResources(), bitmap);
             }
-        };
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

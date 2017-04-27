@@ -1,6 +1,6 @@
 package com.depthguru.rxmap.overlay.tiles;
 
-import rx.Observer;
+import android.graphics.drawable.Drawable;
 
 /**
  * MapTileProviderModule
@@ -9,29 +9,5 @@ import rx.Observer;
  */
 public abstract class MapTileProviderModule {
 
-    final Runnable process(MapTileState mapTileState, Observer<MapTileState> loadSorter, Object monitor) {
-        LoadTask task = createTask(mapTileState, loadSorter);
-        task.monitor = monitor;
-        return task;
-    }
-
-    protected abstract LoadTask createTask(MapTileState mapTileState, Observer<MapTileState> loadSorter);
-
-
-    public static abstract class LoadTask implements Runnable {
-        private Object monitor;
-
-        @Override
-        public void run() {
-            try {
-                load();
-            } finally {
-                synchronized (monitor) {
-                    monitor.notifyAll();
-                }
-            }
-        }
-
-        protected abstract void load();
-    }
+    public abstract Drawable process(MapTile mapTile);
 }

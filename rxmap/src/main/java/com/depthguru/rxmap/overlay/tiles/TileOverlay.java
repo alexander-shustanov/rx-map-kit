@@ -5,13 +5,13 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.os.Build;
+import android.system.Os;
 
 import com.depthguru.rxmap.Projection;
 import com.depthguru.rxmap.RxMapView;
 import com.depthguru.rxmap.overlay.Drawer;
 import com.depthguru.rxmap.overlay.Overlay;
-import com.depthguru.rxmap.rx.MapSchedulers;
-import com.depthguru.rxmap.rx.SingleItemBuffer;
 import com.depthguru.rxmap.rx.StateMonad;
 
 import java.util.Arrays;
@@ -26,21 +26,35 @@ import rx.Observable;
  */
 public class TileOverlay extends Overlay<MapTileBatch> {
 
+    private final boolean completeProjectionWithPreviousTiles;
+
+
+    public TileOverlay(MapTileProviderBase mapTileProviderBase, boolean completeProjectionWithPreviousTiles) {
+        super(mapTileProviderBase);
+        this.completeProjectionWithPreviousTiles = completeProjectionWithPreviousTiles;
+    }
+
+    public TileOverlay(Context context, boolean completeProjectionWithPreviousTiles) {
+        this(new MapTileProviderArray(Arrays.asList(new FileStorageProviderModule(context, Bitmap.Config.ARGB_4444), new MapnikProviderModule(context, Bitmap.Config.ARGB_4444))), completeProjectionWithPreviousTiles);
+    }
+
     public TileOverlay(MapTileProviderBase mapTileProviderBase) {
         super(mapTileProviderBase);
+        this.completeProjectionWithPreviousTiles = Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT;
     }
 
     public TileOverlay(Context context) {
-        this(new MapTileProviderArray(Arrays.asList(new FileStorageProviderModule(context, Bitmap.Config.ARGB_4444), new MapnikProviderModule(context, Bitmap.Config.ARGB_4444))));
+        this(new MapTileProviderArray(Arrays.asList(new FileStorageProviderModule(context, Bitmap.Config.ARGB_4444), new MapnikProviderModule(context, Bitmap.Config.ARGB_4444))), Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT);
     }
 
     @Override
     protected Observable<MapTileBatch> postProcessData(Observable<MapTileBatch> dataObservable) {
-        return super
-                .postProcessData(dataObservable)
-                .compose(SingleItemBuffer.dropOldest())
-                .observeOn(MapSchedulers.tilesBatchAssembleScheduler())
-                .lift(StateMonad.create(MapTileBatch::completeWith));
+        if (completeProjectionWithPreviousTiles) {
+            return super.postProcessData(dataObservable);
+        } else {
+            return super.postProcessData(dataObservable)
+                    .lift(StateMonad.create(MapTileBatch::completeWith));
+        }
     }
 
     @Override

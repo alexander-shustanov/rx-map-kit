@@ -16,8 +16,10 @@ public class TileDrawable {
 
     public final Drawable drawable;
     public final int startX, startY, endX, endY;
+    public final MapTile mapTile;
 
     public TileDrawable(MapTile mapTile, Drawable drawable, int projectionZoom) {
+        this.mapTile = mapTile;
         this.drawable = drawable;
 
         int zoomDelta = projectionZoom - mapTile.getZoomLevel();
