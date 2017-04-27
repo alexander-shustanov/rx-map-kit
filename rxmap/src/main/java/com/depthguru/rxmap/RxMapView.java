@@ -333,8 +333,6 @@ public class RxMapView extends ViewGroup {
         @Override
         protected void onStartMotion() {
             scroller.stopScroll();
-            rotation.stopRotate();
-            zoom.stopZoom();
         }
 
         @Override
