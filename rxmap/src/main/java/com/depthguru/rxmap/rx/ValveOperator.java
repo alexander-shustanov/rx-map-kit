@@ -2,8 +2,8 @@ package com.depthguru.rxmap.rx;
 
 import rx.Observable;
 import rx.Subscriber;
-import rx.Subscription;
 import rx.subjects.BehaviorSubject;
+import rx.subscriptions.SerialSubscription;
 import rx.subscriptions.Subscriptions;
 
 /**
@@ -28,7 +28,7 @@ public class ValveOperator<R, T> implements Observable.Operator<R, T> {
 
             private final Object monitor = new Object();
             private final BehaviorSubject<T> items = BehaviorSubject.create();
-            private Subscription subscription;
+            private SerialSubscription subscription = new SerialSubscription();
             private boolean state = initial;
 
             @Override
@@ -47,19 +47,15 @@ public class ValveOperator<R, T> implements Observable.Operator<R, T> {
                         }, this::onError, this::unsubscribe));
 
                 setupBranch();
+                add(subscription);
             }
 
             private synchronized void setupBranch() {
-                if (subscription != null) {
-                    subscription.unsubscribe();
-                    subscription = null;
-                }
                 if (state) {
-                    subscription = items.compose(then_).subscribe(child::onNext, child::onError, () -> {});
+                    subscription.set(items.compose(then_).subscribe(child::onNext, child::onError, () -> {}));
                 } else {
-                    subscription = items.compose(else_).subscribe(child::onNext, child::onError, () -> {});
+                    subscription.set(items.compose(else_).subscribe(child::onNext, child::onError, () -> {}));
                 }
-                add(subscription);
             }
 
             @Override
