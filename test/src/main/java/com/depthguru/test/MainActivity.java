@@ -8,6 +8,7 @@ import android.util.Log;
 import com.depthguru.rxmap.BoundingBoxE6;
 import com.depthguru.rxmap.GeoPoint;
 import com.depthguru.rxmap.RxMapView;
+import com.depthguru.rxmap.overlay.CompassOverlay;
 import com.depthguru.rxmap.overlay.OverlayManager;
 import com.depthguru.rxmap.overlay.ScaleBarOverlay;
 import com.depthguru.rxmap.overlay.itemized.IconProvider;
@@ -75,6 +76,7 @@ public class MainActivity extends Activity {
         overlayManager.add(new TileOverlay(this));
         overlayManager.add(new ItemizedOverlay(itemsProvider));
         overlayManager.add(new ScaleBarOverlay(mapView));
+        overlayManager.add(new CompassOverlay(mapView));
 
         setContentView(mapView);
 
