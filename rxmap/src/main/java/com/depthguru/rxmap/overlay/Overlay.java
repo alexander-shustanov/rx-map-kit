@@ -1,14 +1,14 @@
 package com.depthguru.rxmap.overlay;
 
+import android.util.Pair;
+
 import com.depthguru.rxmap.Projection;
 import com.depthguru.rxmap.rx.SingleItemBuffer;
-import com.depthguru.rxmap.rx.ValveOperator;
 
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.subjects.BehaviorSubject;
 
-import static rx.Observable.concat;
 import static rx.Observable.just;
 
 /**
@@ -27,21 +27,26 @@ public abstract class Overlay<D> {
     }
 
     final Observable<Drawer> createDrawer(Observable<Projection> projectionObservable) {
-        Observable<Drawer> emptyDrawer = just(Drawer.EMPTY_DRAWER);
+        Observable<Projection> storeLastProjection = projectionObservable.replay(1).autoConnect();
 
-        Observable<Drawer> realDrawer = projectionObservable
-                .lift(new ValveOperator<>(enabled,
-                        projectionObservable_ ->
-                                projectionObservable_.filter(projection -> projection.getDiscreteZoom() >= getMinZoom() && projection.getDiscreteZoom() <= getMaxZoom())
-                                        .compose(this::setupProjectionSubscribe)
-                                        .compose(dataProvider::fetch)
-                                        .compose(this::postProcessData)
-                                        .map(this::createDrawer),
-                        projectionObservable_ -> projectionObservable_.first().map(projection -> Drawer.EMPTY_DRAWER),
-                        true
-                ));
-
-        return concat(emptyDrawer, realDrawer).compose(SingleItemBuffer.dropOldest()).observeOn(AndroidSchedulers.mainThread());
+        return enabled
+                .distinctUntilChanged()
+                .withLatestFrom(just(storeLastProjection), Pair::new)
+                .switchMap(booleanProjectionPair -> {
+                    if (booleanProjectionPair.first) {
+                        return booleanProjectionPair.second
+                                .filter(projection -> projection.getDiscreteZoom() >= getMinZoom() && projection.getDiscreteZoom() <= getMaxZoom())
+                                .compose(this::setupProjectionSubscribe)
+                                .compose(dataProvider::fetch)
+                                .compose(this::postProcessData)
+                                .map(this::createDrawer);
+                    } else {
+                        return just(Drawer.EMPTY_DRAWER);
+                    }
+                })
+                .compose(SingleItemBuffer.dropOldest())
+                .observeOn(AndroidSchedulers.mainThread())
+                .startWith(Drawer.EMPTY_DRAWER);
     }
 
     protected Observable<D> postProcessData(Observable<D> dataObservable) {
@@ -56,6 +61,7 @@ public abstract class Overlay<D> {
 
     protected void detach() {
         dataProvider.detach();
+        enabled.onCompleted();
     }
 
     public int getMinZoom() {

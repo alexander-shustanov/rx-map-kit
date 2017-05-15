@@ -34,10 +34,12 @@ public class MapTileProviderArray extends MapTileProviderBase {
                         .switchMap(projectionCollectionPair ->
                                 loader
                                         .load(projectionCollectionPair.second, projectionCollectionPair.first)
+                                        .observeOn(MapSchedulers.tilesBatchAssembleScheduler())
                                         .scan(new ArrayList<TileDrawable>(), (tileDrawables, tileDrawable) -> {
                                             tileDrawables.add(tileDrawable);
                                             return tileDrawables;
                                         })
+                                        .map(ArrayList::new)
                                         .throttleLast(300, TimeUnit.MILLISECONDS)
                                         .map(tileDrawables -> new MapTileBatch(tileDrawables, projectionCollectionPair.second, projectionCollectionPair.first))
                                         .compose(SingleItemBuffer.dropOldest())
