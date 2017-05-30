@@ -51,8 +51,8 @@ public class Projection {
 
         worldSize = TileSystem.getTileSize() << discreteZoom;
 
-        offsetX = -mapView.getScrollX();
-        offsetY = -mapView.getScrollY();
+        offsetX = -mapView.scroller.getCurrX();
+        offsetY = -mapView.scroller.getCurrY();
 
         pivotX = mapView.pivot.x;
         pivotY = mapView.pivot.y;

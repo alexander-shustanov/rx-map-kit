@@ -74,7 +74,7 @@ public class RxMapView extends ViewGroup {
         setBackground(null);
         setScrollX(scroller.getCurrX());
         setScrollY(scroller.getCurrY());
-        computeProjection(true);
+        computeProjection(false);
     }
 
     public MapController getController() {

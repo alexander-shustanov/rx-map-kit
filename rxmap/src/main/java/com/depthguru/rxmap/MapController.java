@@ -52,6 +52,7 @@ public class MapController {
         point = rxMapView.projection.toMercatorPixels(point.x, point.y, point);
         point.offset(-rxMapView.getWidth() / 2, -rxMapView.getHeight() / 2);
         rxMapView.scroller.scrollTo(point.x, point.y);
+        rxMapView.scrollTo(point.x, point.y);
         rxMapView.computeProjection(true);
         rxMapView.invalidate();
     }
@@ -63,6 +64,7 @@ public class MapController {
                     rxMapView.zoom.getDiscreteZoom(),
                     rxMapView.getWidth() / 2, rxMapView.getHeight() / 2
             );
+            rxMapView.scrollTo(rxMapView.scroller.getCurrX(), rxMapView.scroller.getCurrY());
         }
         rxMapView.computeProjection(true);
         rxMapView.invalidate();
