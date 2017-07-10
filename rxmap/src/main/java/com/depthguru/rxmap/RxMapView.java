@@ -246,9 +246,9 @@ public class RxMapView extends ViewGroup {
         final Rect out = getIntrinsicScreenRect(reuse);
         float mapOrientation = rotation.getRotation();
         if (mapOrientation != 0 && mapOrientation != 180) {
-            GeometryMath.getBoundingBoxForRotatedRectangle(
-                    out, out.centerX(), out.centerY(),
-                    mapOrientation, out
+            GeometryMath.getBoundingBoxForRotatedRect(
+                    out, (int) pivot.x, (int) pivot.y,
+                    -mapOrientation, out
             );
         }
         return out;

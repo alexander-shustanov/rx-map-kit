@@ -6,6 +6,6 @@ package com.depthguru.rxmap;
  * alexander.shustanov on 15.12.16
  */
 public interface MapConstants {
-    float DEG2RAD = (float) (Math.PI / 180f);
+    double DEG2RAD = Math.PI / 180.0;
     int RADIUS_EARTH_METERS = 6378137;
 }

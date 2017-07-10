@@ -2,40 +2,52 @@ package com.depthguru.rxmap.util;
 
 import android.graphics.Rect;
 
+import com.depthguru.rxmap.MapConstants;
+
 public class GeometryMath {
 
-    public static final double DEG2RAD = (Math.PI / 180.0);
-    public static final double RAD2DEG = (180.0 / Math.PI);
-
-    public static Rect getBoundingBoxForRotatedRectangle(Rect rect, int centerX,
-                                                         int centerY, float angle, Rect reuse) {
+    public static Rect getBoundingBoxForRotatedRect(Rect rect, int pivotX, int pivotY, double degrees, Rect reuse) {
         if (reuse == null) {
             reuse = new Rect();
         }
 
-        double theta = angle * DEG2RAD;
+        double theta = degrees * MapConstants.DEG2RAD;
         double sinTheta = Math.sin(theta);
         double cosTheta = Math.cos(theta);
-        double dx1 = rect.left - centerX;
-        double dy1 = rect.top - centerY;
-        double newX1 = centerX - dx1 * cosTheta + dy1 * sinTheta;
-        double newY1 = centerY - dx1 * sinTheta - dy1 * cosTheta;
-        double dx2 = rect.right - centerX;
-        double dy2 = rect.top - centerY;
-        double newX2 = centerX - dx2 * cosTheta + dy2 * sinTheta;
-        double newY2 = centerY - dx2 * sinTheta - dy2 * cosTheta;
-        double dx3 = rect.left - centerX;
-        double dy3 = rect.bottom - centerY;
-        double newX3 = centerX - dx3 * cosTheta + dy3 * sinTheta;
-        double newY3 = centerY - dx3 * sinTheta - dy3 * cosTheta;
-        double dx4 = rect.right - centerX;
-        double dy4 = rect.bottom - centerY;
-        double newX4 = centerX - dx4 * cosTheta + dy4 * sinTheta;
-        double newY4 = centerY - dx4 * sinTheta - dy4 * cosTheta;
-        reuse.set((int) Min4(newX1, newX2, newX3, newX4), (int) Min4(newY1, newY2, newY3, newY4),
-                (int) Max4(newX1, newX2, newX3, newX4), (int) Max4(newY1, newY2, newY3, newY4));
+        double dx;
+        double dy;
 
+        dx = rect.left - pivotX;
+        dy = rect.top - pivotY;
+        double x1 = getRotatedX(pivotX, cosTheta, sinTheta, dx, dy);
+        double y1 = getRotatedY(pivotY, cosTheta, sinTheta, dx, dy);
+
+        dx = rect.right - pivotX;
+        dy = rect.top - pivotY;
+        double x2 = getRotatedX(pivotX, cosTheta, sinTheta, dx, dy);
+        double y2 = getRotatedY(pivotY, cosTheta, sinTheta, dx, dy);
+
+        dx = rect.right - pivotX;
+        dy = rect.bottom - pivotY;
+        double x3 = getRotatedX(pivotX, cosTheta, sinTheta, dx, dy);
+        double y3 = getRotatedY(pivotY, cosTheta, sinTheta, dx, dy);
+
+        dx = rect.left - pivotX;
+        dy = rect.bottom - pivotY;
+        double x4 = getRotatedX(pivotX, cosTheta, sinTheta, dx, dy);
+        double y4 = getRotatedY(pivotY, cosTheta, sinTheta, dx, dy);
+
+        reuse.set((int) Min4(x1, x2, x3, x4), (int) Min4(y1, y2, y3, y4),
+                (int) Max4(x1, x2, x3, x4), (int) Max4(y1, y2, y3, y4));
         return reuse;
+    }
+
+    private static double getRotatedX(int pivotX, double cosTheta, double sinTheta, double dx, double dy) {
+        return pivotX + dx * cosTheta - dy * sinTheta;
+    }
+
+    private static double getRotatedY(int pivotY, double cosTheta, double sinTheta, double dx, double dy) {
+        return pivotY + dx * sinTheta + dy * cosTheta;
     }
 
     private static double Min4(double a, double b, double c, double d) {

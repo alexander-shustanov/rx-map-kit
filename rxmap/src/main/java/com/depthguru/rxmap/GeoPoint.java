@@ -129,7 +129,7 @@ public class GeoPoint implements IGeoPoint, MapConstants {
         final double dist = aDistanceInMeters / RADIUS_EARTH_METERS;
 
         // convert bearing to radians
-        final float brng = DEG2RAD * aBearingInDegrees;
+        final float brng = (float) (DEG2RAD * aBearingInDegrees);
 
         // get current location in radians
         final double lat1 = DEG2RAD * getLatitudeE6() / 1E6;

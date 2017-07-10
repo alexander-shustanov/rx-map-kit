@@ -80,6 +80,11 @@ public class MainActivity extends Activity {
 
         setContentView(mapView);
 
+        mapView.addOnFirstLayoutListener((changed, l, t, r, b) -> {
+            mapView.getController().setZoom(13f);
+            mapView.getController().setCenter(new GeoPoint(53.211377999999996, 50.176505999999996));
+        });
+
         mapView.getScrollEventObservable().debounce(200, TimeUnit.MILLISECONDS).subscribe(scrollEvent -> Log.d(TAG, "scrollEvent : " + scrollEvent));
         mapView.getFlingEventObservable().subscribe(flingEvent -> Log.d(TAG, "flingEvent : " + flingEvent));
         mapView.getFlingEndEventObservable().subscribe(flingEndEvent -> Log.d(TAG, "flingEndEvent : " + flingEndEvent));
