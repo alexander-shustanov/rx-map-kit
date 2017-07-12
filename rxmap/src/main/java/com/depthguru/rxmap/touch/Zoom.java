@@ -96,11 +96,12 @@ public class Zoom {
     }
 
     public void zoomIn() {
-        z.scrollBy(1f, ANIMATION_DURATION);
+        zoomTo((int) (z.getCurrentPosition() + 1));
     }
 
     public void zoomOut() {
-        z.scrollBy(-1f, ANIMATION_DURATION);
+        float zoom = (float) z.getCurrentPosition();
+        zoomTo(zoom == (int) zoom ? zoom - 1: (int) zoom);
     }
 
     public void stopZoom() {
