@@ -21,10 +21,15 @@ public class TouchState {
     private float fingersDistance;
     private float initialRotation;
     private State state = State.NONE;
+    private MotionEvent lastEvent;
 
     public TouchState(float touchSlop, float flingVelocitySlop) {
         this.touchSlop = touchSlop;
         this.flingVelocitySlop = flingVelocitySlop;
+    }
+
+    public MotionEvent getLastEvent() {
+        return lastEvent;
     }
 
     public boolean canPerformTap() {
@@ -75,6 +80,7 @@ public class TouchState {
     }
 
     public void savePrevEvent(MotionEvent event) {
+        lastEvent = MotionEvent.obtain(event);
         computeScrollPosition(event, scrollPosition);
         if (event.getPointerCount() > 1) {
             fingersDistance = computeFingerDistance(event);

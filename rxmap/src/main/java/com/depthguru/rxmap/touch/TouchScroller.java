@@ -94,12 +94,15 @@ public abstract class TouchScroller {
     }
 
     private void performDoubleTap(MotionEvent event) {
+        handler.removeCallbacksAndMessages(tapToken);
         tapToken = null;
         onDoubleTap(event.getX(), event.getY());
     }
 
     private void postTap(MotionEvent event) {
-        handler.postAtTime(() -> performTap(event.getX(), event.getY()), tapToken, SystemClock.uptimeMillis() + 500);
+        float x = event.getX();
+        float y = event.getY();
+        handler.postAtTime(() -> performTap(x, y), tapToken, SystemClock.uptimeMillis() + 500);
     }
 
     private void handleActionDown(MotionEvent event) {
@@ -144,14 +147,14 @@ public abstract class TouchScroller {
     }
 
     private void performLongPress() {
-        if (state.canPerformLongPress() && onLongTap()) {
+        if (state.canPerformLongPress() && onLongTap(state.getLastEvent().getX(), state.getLastEvent().getY())) {
             state.longTapPerformed();
         }
     }
 
     protected void onDoubleTap(float x, float y) {}
 
-    protected boolean onLongTap() {
+    protected boolean onLongTap(float x, float y) {
         return false;
     }
 
