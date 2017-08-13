@@ -7,7 +7,7 @@ buildscript {
         maven { url "https://jitpack.io" }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.0'
+        classpath 'com.android.tools.build:gradle:3.0.0-alpha9'
         classpath 'com.neenbedankt.gradle.plugins:android-apt:1.7'
         classpath 'me.tatarka:gradle-retrolambda:3.3.0'
     }

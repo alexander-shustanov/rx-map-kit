@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import rx.Observable;
+import rx.functions.Functions;
 
 /**
  * MapTileProviderArray
@@ -33,7 +34,7 @@ public class MapTileProviderArray extends MapTileProviderBase {
                         .observeOn(MapSchedulers.tilesBatchAssembleScheduler())
                         .switchMap(projectionCollectionPair ->
                                 loader
-                                        .load(projectionCollectionPair.second, projectionCollectionPair.first)
+                                        .load(new ArrayList<>(projectionCollectionPair.second), projectionCollectionPair.first)
                                         .observeOn(MapSchedulers.tilesBatchAssembleScheduler())
                                         .scan(new ArrayList<TileDrawable>(), (tileDrawables, tileDrawable) -> {
                                             tileDrawables.add(tileDrawable);
@@ -41,6 +42,7 @@ public class MapTileProviderArray extends MapTileProviderBase {
                                         })
                                         .map(ArrayList::new)
                                         .throttleLast(300, TimeUnit.MILLISECONDS)
+                                        .filter(tileDrawables -> !tileDrawables.isEmpty())
                                         .map(tileDrawables -> new MapTileBatch(tileDrawables, projectionCollectionPair.second, projectionCollectionPair.first))
                                         .compose(SingleItemBuffer.dropOldest())
                                         .observeOn(MapSchedulers.tilesBatchAssembleScheduler())

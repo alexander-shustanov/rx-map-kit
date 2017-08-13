@@ -6,7 +6,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.os.Build;
-import android.system.Os;
+import android.util.Log;
 
 import com.depthguru.rxmap.Projection;
 import com.depthguru.rxmap.RxMapView;
@@ -35,7 +35,7 @@ public class TileOverlay extends Overlay<MapTileBatch> {
     }
 
     public TileOverlay(Context context, boolean completeProjectionWithPreviousTiles) {
-        this(new MapTileProviderArray(Arrays.asList(new FileStorageProviderModule(context, Bitmap.Config.ARGB_4444), new MapnikProviderModule(context, Bitmap.Config.ARGB_4444))), completeProjectionWithPreviousTiles);
+        this(new MapTileProviderArray(Arrays.asList(new FileStorageProviderModule(context, Bitmap.Config.ARGB_4444), new UrlProviderModule(context, Bitmap.Config.ARGB_4444))), completeProjectionWithPreviousTiles);
     }
 
     public TileOverlay(MapTileProviderBase mapTileProviderBase) {
@@ -44,16 +44,16 @@ public class TileOverlay extends Overlay<MapTileBatch> {
     }
 
     public TileOverlay(Context context) {
-        this(new MapTileProviderArray(Arrays.asList(new FileStorageProviderModule(context, Bitmap.Config.ARGB_4444), new MapnikProviderModule(context, Bitmap.Config.ARGB_4444))), Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT);
+        this(new MapTileProviderArray(Arrays.asList(new FileStorageProviderModule(context, Bitmap.Config.ARGB_4444), new UrlProviderModule(context, Bitmap.Config.ARGB_4444))), Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT);
     }
 
     @Override
     protected Observable<MapTileBatch> postProcessData(Observable<MapTileBatch> dataObservable) {
         if (completeProjectionWithPreviousTiles) {
-            return super.postProcessData(dataObservable);
-        } else {
             return super.postProcessData(dataObservable)
                     .lift(StateMonad.create(MapTileBatch::completeWith));
+        } else {
+            return super.postProcessData(dataObservable);
         }
     }
 
@@ -77,6 +77,8 @@ public class TileOverlay extends Overlay<MapTileBatch> {
 
         @Override
         public void draw(Canvas canvas, Projection projection) {
+
+            int drawed = 0;
 
             int offsetX = projection.getOffsetX();
             int offsetY = projection.getOffsetY();
@@ -137,6 +139,7 @@ public class TileOverlay extends Overlay<MapTileBatch> {
                                     (int) (startY + worldYOffset),
                                     (int) (endX + worldXOffset),
                                     (int) (endY + worldYOffset));
+                            drawed++;
                             tileDrawable.drawable.draw(canvas);
 
                             if (RxMapView.DEBUG) {
@@ -152,6 +155,10 @@ public class TileOverlay extends Overlay<MapTileBatch> {
             }
 
             canvas.restore();
+
+            if(drawed == 0) {
+                Log.d("TileOverlay", "Empty screen!");
+            }
         }
     }
 }

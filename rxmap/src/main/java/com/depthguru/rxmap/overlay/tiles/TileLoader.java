@@ -43,7 +43,7 @@ public class TileLoader {
 
         int tilesPerWidth = (int) Math.ceil(Math.sqrt(2) * widthPixels / (double) tileSize) + 2;
         int tilesPerHeight = (int) Math.ceil(Math.sqrt(2) * heightPixels / (double) tileSize) + 2;
-        cacheSize = tilesPerWidth * tilesPerHeight;
+        cacheSize = tilesPerWidth * tilesPerHeight * 2;
 
         tileCache = new TileCache(cacheSize);
     }
@@ -108,7 +108,7 @@ public class TileLoader {
             final Subscriber<? super TileDrawable> childSubscriber = this.child;
             int discreteZoom = this.discreteZoom;
 
-            for (;;) {
+            for (; ; ) {
                 while (emitted != requestedAmount && (mapTiles.hasNext() || toLoad.hasNext())) {
                     if (childSubscriber.isUnsubscribed()) {
                         return;
@@ -173,7 +173,7 @@ public class TileLoader {
                 }
             }
 
-            if(!toLoad.hasNext()) {
+            if (!toLoad.hasNext()) {
                 child.onCompleted();
                 return;
             }
