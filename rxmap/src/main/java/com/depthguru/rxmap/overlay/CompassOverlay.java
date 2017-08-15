@@ -65,7 +65,7 @@ public class CompassOverlay extends SimpleOverlay {
         canvas.drawBitmap(compassFrameBitmap, 0, 0, smoothPaint);
         canvas.restore();
 
-        compassMatrix.setRotate(rxMapView.getRotation(), сompassRoseCenterX, сompassRoseCenterY);
+        compassMatrix.setRotate(rxMapView.getOrientation(), сompassRoseCenterX, сompassRoseCenterY);
         compassMatrix.postTranslate(-сompassRoseCenterX, -сompassRoseCenterY);
         compassMatrix.postTranslate(compassCenterX, compassCenterY);
 

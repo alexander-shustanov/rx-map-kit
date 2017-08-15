@@ -155,10 +155,6 @@ public class TileOverlay extends Overlay<MapTileBatch> {
             }
 
             canvas.restore();
-
-            if(drawed == 0) {
-                Log.d("TileOverlay", "Empty screen!");
-            }
         }
     }
 }

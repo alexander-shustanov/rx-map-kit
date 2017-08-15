@@ -53,10 +53,9 @@ public class RxMapView extends ViewGroup {
     private final OverlayManager overlayManager = new OverlayManager(projectionSubject, this);
 
     private final List<OnFirstLayoutListener> onFirstLayoutListeners = new ArrayList<>();
-    private boolean layoutOccurred = false;
-
     Projection projection;
     boolean multiTouch = true;
+    private boolean layoutOccurred = false;
 
     public RxMapView(Context context) {
         super(context);
@@ -105,8 +104,14 @@ public class RxMapView extends ViewGroup {
         return projection;
     }
 
-    public float getRotation() {
+    public float getOrientation() {
         return rotation.getRotation();
+    }
+
+    public void setOrientation(float orientation) {
+        rotation.setRotation(orientation);
+
+        computeProjection(true);
     }
 
     public IGeoPoint getMapCenter() {
@@ -226,12 +231,12 @@ public class RxMapView extends ViewGroup {
         return zoom.getMinZoom();
     }
 
-    public float getMaxZoom() {
-        return zoom.getMaxZoom();
-    }
-
     public void setMinZoom(float minZoom) {
         zoom.setMinZoom(minZoom);
+    }
+
+    public float getMaxZoom() {
+        return zoom.getMaxZoom();
     }
 
     public void setMaxZoom(float maxZoom) {
@@ -293,6 +298,10 @@ public class RxMapView extends ViewGroup {
         scrollEventObservable.onNext(new ScrollEvent(x, y));
     }
 
+    public interface OnFirstLayoutListener {
+        void onFirstLayout(boolean changed, int l, int t, int r, int b);
+    }
+
     private class MapTouchScroller extends TouchScroller {
 
         private MapTouchScroller(Context context) {
@@ -336,14 +345,15 @@ public class RxMapView extends ViewGroup {
         }
 
         @Override
+        protected void onTap(float x, float y) {
+            overlayManager.onTap(x, y, projection);
+        }
+
+        @Override
         protected void onDoubleTap(float x, float y) {
             updatePivot(x, y);
             zoom.zoomIn();
             invalidate();
         }
-    }
-
-    public interface OnFirstLayoutListener {
-        void onFirstLayout(boolean changed, int l, int t, int r, int b);
     }
 }

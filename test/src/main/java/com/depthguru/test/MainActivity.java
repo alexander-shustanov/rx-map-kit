@@ -1,9 +1,7 @@
 package com.depthguru.test;
 
 import android.app.Activity;
-import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -18,13 +16,9 @@ import com.depthguru.rxmap.overlay.itemized.Item;
 import com.depthguru.rxmap.overlay.itemized.ItemizedDataProvider;
 import com.depthguru.rxmap.overlay.itemized.ItemizedOverlay;
 import com.depthguru.rxmap.overlay.itemized.PlainItem;
-import com.depthguru.rxmap.overlay.tiles.FileStorageProviderModule;
-import com.depthguru.rxmap.overlay.tiles.MapTileProviderArray;
 import com.depthguru.rxmap.overlay.tiles.TileOverlay;
-import com.depthguru.rxmap.overlay.tiles.UrlProviderModule;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +26,6 @@ import java.util.concurrent.TimeUnit;
 
 import rx.Observable;
 
-import static java.lang.String.format;
 import static rx.Observable.just;
 
 public class MainActivity extends Activity {
@@ -47,20 +40,19 @@ public class MainActivity extends Activity {
             return just(Collections.singletonMap("1", drawable));
         }
     };
-
-    private ItemizedDataProvider<String, Void> itemsProvider = new ItemizedDataProvider<String, Void>(iconProvider) {
-        private final List<PlainItem<String>> items = new ArrayList<>();
+    private ItemizedDataProvider<String, String> itemsProvider = new ItemizedDataProvider<String, String>(iconProvider) {
+        private final List<IdItem> items = new ArrayList<>();
 
         {
             for (int i = 0; i < 2000; i++) {
-                items.add(new PlainItem<>("1", new GeoPoint(90.0 * Math.random() - 45.0, 180.0 * Math.random() - 90.0)));
+                items.add(new IdItem("1", i + "", new GeoPoint(90.0 * Math.random() - 45.0, 180.0 * Math.random() - 90.0)));
             }
         }
 
         @Override
-        protected Observable<List<Item<String, Void>>> fetchByBounds(BoundingBoxE6 boundingBoxE6) {
-            return Observable.<Item<String, Void>>create(subscriber -> {
-                for (PlainItem<String> item : this.items) {
+        protected Observable<List<Item<String, String>>> fetchByBounds(BoundingBoxE6 boundingBoxE6) {
+            return Observable.<Item<String, String>>create(subscriber -> {
+                for (IdItem item : this.items) {
                     if (boundingBoxE6.contains(item.getCoordinate())) {
                         subscriber.onNext(item);
                     }
@@ -83,9 +75,14 @@ public class MainActivity extends Activity {
         overlayManager.add(new TileOverlay(this));
 //        UrlProviderModule urlProviderModule = new UrlProviderModule(this, mapTile -> format("http://mt1.google.com/vt/lyrs=m&x=%s&y=%s&z=%s", mapTile.getX(), mapTile.getY(), mapTile.getZoomLevel()), Bitmap.Config.ARGB_4444);
 //        overlayManager.add(new TileOverlay(new MapTileProviderArray(Arrays.asList(new FileStorageProviderModule(this), urlProviderModule)), Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT));
-        overlayManager.add(new ItemizedOverlay(itemsProvider));
+        ItemizedOverlay<String, String> itemizedOverlay = new ItemizedOverlay<>(itemsProvider);
+        overlayManager.add(itemizedOverlay);
         overlayManager.add(new ScaleBarOverlay(mapView));
         overlayManager.add(new CompassOverlay(mapView));
+
+        itemizedOverlay.getTapItemsObservable().subscribe(o -> {
+            System.out.println("Tap");
+        });
 
         setContentView(mapView);
 
@@ -98,5 +95,32 @@ public class MainActivity extends Activity {
         mapView.getFlingEventObservable().subscribe(flingEvent -> Log.d(TAG, "flingEvent : " + flingEvent));
         mapView.getFlingEndEventObservable().subscribe(flingEndEvent -> Log.d(TAG, "flingEndEvent : " + flingEndEvent));
         mapView.getOnZoomEventObservable().subscribe(zoom -> Log.d(TAG, "onZoomEvent : " + zoom));
+    }
+
+    private class IdItem implements Item<String, String> {
+
+        private final String type, id;
+        private final GeoPoint coordinate;
+
+        private IdItem(String type, String id, GeoPoint coordinate) {
+            this.type = type;
+            this.id = id;
+            this.coordinate = coordinate;
+        }
+
+        @Override
+        public String getType() {
+            return type;
+        }
+
+        @Override
+        public GeoPoint getCoordinate() {
+            return coordinate;
+        }
+
+        @Override
+        public String getData() {
+            return id;
+        }
     }
 }

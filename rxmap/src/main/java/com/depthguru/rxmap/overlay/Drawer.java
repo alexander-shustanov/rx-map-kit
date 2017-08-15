@@ -27,4 +27,8 @@ public abstract class Drawer {
     }
 
     public abstract void draw(Canvas canvas, Projection projection);
+
+    public boolean onTap(float x, float y, Projection projection) {
+        return false;
+    }
 }

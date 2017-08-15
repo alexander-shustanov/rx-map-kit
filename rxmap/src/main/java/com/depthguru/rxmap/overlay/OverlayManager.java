@@ -92,4 +92,12 @@ public class OverlayManager {
         overlays.clear();
         drawersSubscription.unsubscribe();
     }
+
+    public void onTap(float x, float y, Projection projection) {
+        for (Drawer drawer : drawers) {
+            if(drawer.onTap(x,y, projection)) {
+                return;
+            }
+        }
+    }
 }
