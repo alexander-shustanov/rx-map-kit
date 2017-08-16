@@ -5,6 +5,10 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.graphics.Rect;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Parcelable;
+import android.support.annotation.Nullable;
 import android.support.annotation.Px;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -55,6 +59,7 @@ public class RxMapView extends ViewGroup {
     private final List<OnFirstLayoutListener> onFirstLayoutListeners = new ArrayList<>();
     Projection projection;
     boolean multiTouch = true;
+    boolean rotationAllowed = true;
     private boolean layoutOccurred = false;
 
     public RxMapView(Context context) {
@@ -70,10 +75,38 @@ public class RxMapView extends ViewGroup {
     }
 
     private void init() {
-        setBackground(null);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            setBackground(null);
+        }
         setScrollX(scroller.getCurrX());
         setScrollY(scroller.getCurrY());
         computeProjection(false);
+    }
+
+    @Nullable
+    @Override
+    protected Parcelable onSaveInstanceState() {
+        Bundle state = new Bundle();
+        state.putInt("scrollX", (int) (scroller.getCurrX() + pivot.x));
+        state.putInt("scrollY", ((int) (scroller.getCurrY() + pivot.y)));
+        state.putFloat("zoom", zoom.getCurrentZoom());
+        Parcelable superState = super.onSaveInstanceState();
+        if (superState != null) {
+            state.putParcelable("super", superState);
+        }
+        return state;
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Parcelable state) {
+        Bundle bundle = (Bundle) state;
+        Parcelable superState = bundle.getParcelable("super");
+        if(superState != null) {
+            super.onRestoreInstanceState(superState);
+        }
+        zoom.setZoom(bundle.getFloat("zoom"));
+        scroller.setZoom(zoom.getDiscreteZoom());
+        scroller.scrollTo(bundle.getInt("scrollX"), bundle.getInt("scrollY"));
     }
 
     public MapController getController() {
@@ -109,9 +142,20 @@ public class RxMapView extends ViewGroup {
     }
 
     public void setOrientation(float orientation) {
+        if(!rotationAllowed) {
+            return;
+        }
         rotation.setRotation(orientation);
 
         computeProjection(true);
+    }
+
+    public boolean isRotationAllowed() {
+        return rotationAllowed;
+    }
+
+    public void setRotationAllowed(boolean rotationAllowed) {
+        this.rotationAllowed = rotationAllowed;
     }
 
     public IGeoPoint getMapCenter() {
@@ -333,7 +377,9 @@ public class RxMapView extends ViewGroup {
             if (zoomDiff != 0) {
                 scroller.reconfigureWithZoomFactor(endZoom, pivot.x, pivot.y);
             }
-            RxMapView.this.rotation.setRotation(RxMapView.this.rotation.getRotation() + rotation);
+            if (rotationAllowed) {
+                RxMapView.this.rotation.setRotation(RxMapView.this.rotation.getRotation() + rotation);
+            }
 
             computeProjection(false);
             updatePivot(pivot.x, pivot.y);

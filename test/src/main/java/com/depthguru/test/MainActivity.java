@@ -69,6 +69,7 @@ public class MainActivity extends Activity {
         drawable = getResources().getDrawable(R.mipmap.ic_launcher);
 
         RxMapView mapView = new RxMapView(this);
+        mapView.setId(R.id.map);
         mapView.setTilesScaledToDpi(true);
 
         OverlayManager overlayManager = mapView.getOverlayManager();
@@ -87,8 +88,8 @@ public class MainActivity extends Activity {
         setContentView(mapView);
 
         mapView.addOnFirstLayoutListener((changed, l, t, r, b) -> {
-            mapView.getController().setZoom(13f);
-            mapView.getController().setCenter(new GeoPoint(53.211377999999996, 50.176505999999996));
+//            mapView.getController().setZoom(13f);
+//            mapView.getController().setCenter(new GeoPoint(53.211377999999996, 50.176505999999996));
         });
 
         mapView.getScrollEventObservable().debounce(200, TimeUnit.MILLISECONDS).subscribe(scrollEvent -> Log.d(TAG, "scrollEvent : " + scrollEvent));

@@ -101,4 +101,9 @@ public class Scroller {
         x.setFullValue(worldSize);
         y.setFullValue(worldSize);
     }
+
+    public void setZoom(int zoom) {
+        this.zoom = zoom;
+        updateWorldSize(zoom);
+    }
 }
